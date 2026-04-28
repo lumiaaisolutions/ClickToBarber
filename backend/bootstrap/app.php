@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Common\Middleware\EnsureFeatureEnabled;
+use App\Http\Common\Middleware\EnsureRole;
 use App\Http\Common\Middleware\RateLimitByIp;
 use App\Http\Common\Middleware\ResolveTenant;
 use Illuminate\Foundation\Application;
@@ -21,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'tenant'         => ResolveTenant::class,
             'feature'        => EnsureFeatureEnabled::class,
+            'role'           => EnsureRole::class,
             'rate.ip'        => RateLimitByIp::class,
             'sanctum.stateful' => EnsureFrontendRequestsAreStateful::class,
         ]);

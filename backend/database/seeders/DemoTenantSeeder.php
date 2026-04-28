@@ -15,6 +15,7 @@ use App\Domain\Staff\Models\Barber;
 use App\Domain\Staff\Models\BarberShift;
 use App\Domain\Subscriptions\Models\Plan;
 use App\Domain\Tenancy\Models\Tenant;
+use App\Domain\Tenancy\Models\TenantBranding;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
@@ -45,15 +46,67 @@ class DemoTenantSeeder extends Seeder
             ]
         );
 
-        // Admin user
+        // Branding default (tenant ya configurado, demo cómoda)
+        TenantBranding::updateOrCreate(
+            ['tenant_id' => $tenant->id],
+            [
+                ...TenantBranding::defaultsForTenant($tenant->id),
+                'admin_display_name' => 'Carlos Mendoza',
+                'public_tagline'     => 'Barbería de autor en CDMX desde 2014.',
+                'logo_url'           => null,
+                'cover_url'          => 'https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=1600',
+            ]
+        );
+
+        // Admin user (onboarding ya completado para demo cómoda)
         $admin = User::updateOrCreate(
             ['email' => 'admin@elnavajazo.test'],
             [
-                'tenant_id' => $tenant->id,
-                'name'      => 'Carlos Mendoza',
-                'phone'     => '+5215500001111',
-                'role'      => User::ROLE_ADMIN,
-                'password'  => bcrypt('password'),
+                'tenant_id'      => $tenant->id,
+                'name'           => 'Carlos Mendoza',
+                'phone'          => '+5215500001111',
+                'role'           => User::ROLE_ADMIN,
+                'password'       => bcrypt('password'),
+                'first_login_at' => now()->subDays(30),
+            ]
+        );
+
+        // Manager (full CRUD pero no es el dueño)
+        User::updateOrCreate(
+            ['email' => 'gerencia@elnavajazo.test'],
+            [
+                'tenant_id'      => $tenant->id,
+                'name'           => 'Lucía Herrera',
+                'phone'          => '+5215500002222',
+                'role'           => User::ROLE_MANAGER,
+                'password'       => bcrypt('password'),
+                'first_login_at' => now()->subDays(20),
+            ]
+        );
+
+        // Recepcionista (sólo lectura + agenda)
+        User::updateOrCreate(
+            ['email' => 'recepcion@elnavajazo.test'],
+            [
+                'tenant_id'      => $tenant->id,
+                'name'           => 'Sofía Linares',
+                'phone'          => '+5215500003333',
+                'role'           => User::ROLE_RECEPTIONIST,
+                'password'       => bcrypt('password'),
+                'first_login_at' => now()->subDays(10),
+            ]
+        );
+
+        // Barbero con cuenta (puede entrar y ver/editar sus horarios)
+        User::updateOrCreate(
+            ['email' => 'diego@elnavajazo.test'],
+            [
+                'tenant_id'      => $tenant->id,
+                'name'           => 'Diego Ramírez',
+                'phone'          => '+5215511110001',
+                'role'           => User::ROLE_BARBER,
+                'password'       => bcrypt('password'),
+                'first_login_at' => now()->subDays(5),
             ]
         );
 

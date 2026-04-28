@@ -40,7 +40,7 @@ final class AuthController extends Controller
             ]);
         }
 
-        if (! in_array($user->role, [User::ROLE_ADMIN, User::ROLE_PLATFORM_OWNER, User::ROLE_BARBER], true)) {
+        if (! in_array($user->role, User::PORTAL_ROLES, true)) {
             throw ValidationException::withMessages([
                 'email' => ['Esta cuenta no tiene acceso al portal admin.'],
             ]);
@@ -55,18 +55,8 @@ final class AuthController extends Controller
 
         return response()->json([
             'token' => $token,
-            'user'  => [
-                'id'    => $user->id,
-                'name'  => $user->name,
-                'email' => $user->email,
-                'role'  => $user->role,
-            ],
-            'tenant' => $tenant ? [
-                'id'   => $tenant->id,
-                'slug' => $tenant->slug,
-                'name' => $tenant->name,
-                'plan' => $tenant->plan_id,
-            ] : null,
+            'user'  => $this->serializeUser($user),
+            'tenant' => $this->serializeTenant($tenant),
         ]);
     }
 
@@ -86,18 +76,41 @@ final class AuthController extends Controller
             : null;
 
         return response()->json([
-            'user' => [
-                'id'    => $user->id,
-                'name'  => $user->name,
-                'email' => $user->email,
-                'role'  => $user->role,
-            ],
-            'tenant' => $tenant ? [
-                'id'   => $tenant->id,
-                'slug' => $tenant->slug,
-                'name' => $tenant->name,
-                'plan' => $tenant->plan_id,
-            ] : null,
+            'user'   => $this->serializeUser($user),
+            'tenant' => $this->serializeTenant($tenant),
         ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function serializeUser(User $user): array
+    {
+        return [
+            'id'             => $user->id,
+            'name'           => $user->name,
+            'email'          => $user->email,
+            'role'           => $user->role,
+            'first_login_at' => $user->first_login_at?->toIso8601String(),
+            'can_write'      => $user->canWrite(),
+            'can_see_finance' => $user->canSeeFinance(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function serializeTenant(?Tenant $tenant): ?array
+    {
+        if (! $tenant) {
+            return null;
+        }
+
+        return [
+            'id'   => $tenant->id,
+            'slug' => $tenant->slug,
+            'name' => $tenant->name,
+            'plan' => $tenant->plan_id,
+        ];
     }
 }
