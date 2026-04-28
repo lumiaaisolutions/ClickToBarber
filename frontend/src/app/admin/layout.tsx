@@ -47,8 +47,12 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   const me = await getMe();
 
+  // Cookie inválida o token expirado: pasamos por el route handler que la
+  // borra antes de redirigir al login. Si redirigiéramos directo a /login
+  // sin borrar la cookie, /login la vería y volvería a empujar a /admin,
+  // causando un loop de history.replaceState().
   if (me === "unauthorized") {
-    redirect("/login");
+    redirect("/api/auth/logout");
   }
 
   if (me === "error" || me === null) {

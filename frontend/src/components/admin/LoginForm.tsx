@@ -29,18 +29,12 @@ export function LoginForm() {
     }
 
     const json = (await res.json().catch(() => null)) as {
-      tenant?: { slug: string } | null;
       user?: { first_login_at?: string | null };
     } | null;
 
-    const slug = json?.tenant?.slug;
-    const isFirstLogin = json?.user?.first_login_at == null;
-    const target =
-      slug && isFirstLogin
-        ? `/admin/${slug}/onboarding`
-        : slug
-          ? `/admin/${slug}`
-          : "/admin";
+    // Sin slugs en la ruta — el árbol /admin no usa [slug]; el aislamiento
+    // visual lo aporta <BrandingProvider> en /admin/layout.
+    const target = json?.user?.first_login_at == null ? "/admin/onboarding" : "/admin";
 
     startTransition(() => {
       router.replace(target);

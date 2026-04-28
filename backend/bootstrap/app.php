@@ -7,7 +7,6 @@ use App\Http\Common\Middleware\ResolveTenant;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -17,14 +16,17 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->statefulApi();
+        // NO se usa statefulApi(): la SPA habla con el backend vía Bearer tokens
+        // (Sanctum personal access tokens) reenviados por route handlers de
+        // Next.js desde una cookie httpOnly. statefulApi() obligaría CSRF a
+        // toda /api/*, rompiendo endpoints públicos como /api/client/appointments
+        // con 419 Page Expired.
 
         $middleware->alias([
-            'tenant'         => ResolveTenant::class,
-            'feature'        => EnsureFeatureEnabled::class,
-            'role'           => EnsureRole::class,
-            'rate.ip'        => RateLimitByIp::class,
-            'sanctum.stateful' => EnsureFrontendRequestsAreStateful::class,
+            'tenant'   => ResolveTenant::class,
+            'feature'  => EnsureFeatureEnabled::class,
+            'role'     => EnsureRole::class,
+            'rate.ip'  => RateLimitByIp::class,
         ]);
 
         // Aplica rate limit + tenant a todo el grupo api

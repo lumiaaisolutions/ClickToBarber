@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { AUTH_COOKIE } from "@/lib/auth";
+import { API_BASE, AUTH_COOKIE } from "@/lib/auth";
 import { LoginForm } from "@/components/admin/LoginForm";
 import { Logo } from "@/components/Logo";
 
@@ -12,9 +12,25 @@ export const metadata = {
   description: "Accede al portal de tu barbería en LUMIA.",
 };
 
+async function hasValidSession(token: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/auth/me`, {
+      headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 export default async function LoginPage() {
   const store = await cookies();
-  if (store.get(AUTH_COOKIE)?.value) {
+  const token = store.get(AUTH_COOKIE)?.value;
+
+  // Sólo redirige si la sesión es válida. Si la cookie quedó vieja, mostramos
+  // el form y dejamos que el siguiente login la sobreescriba (evita loop).
+  if (token && (await hasValidSession(token))) {
     redirect("/admin");
   }
 
