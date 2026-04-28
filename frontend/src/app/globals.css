@@ -1,75 +1,109 @@
 @import "tailwindcss";
 
 /* =========================================================
-   BarberPro — Dark Premium Design Tokens
-   Inspirado en barberías de lujo: cuero, latón, navaja pulida.
+   LUMIA — Old Money Design Tokens
+   Paleta clara inspirada en clubs privados de Mayfair:
+   marfil, vellum, verde botella, navy clásico, oro mate.
+   Estos tokens son la BASE INMUTABLE de LUMIA.
+   El branding por tenant los sobrescribe vía <BrandingProvider>
+   sólo en /admin/{slug} y /b/{slug}.
    ========================================================= */
 :root {
-  --bg-void:      #07080A;
-  --bg-base:      #0E1014;
-  --bg-elevated:  #161A21;
-  --bg-overlay:   #1F242D;
+  /* Base — Marfil & papel manila */
+  --bg-canvas:   #FBF7EE;  /* Fondo absoluto */
+  --bg-paper:    #F5EFE0;  /* Cards primarias */
+  --bg-vellum:   #EDE5D2;  /* Cards elevadas / modales */
+  --bg-sage:     #E4DCC6;  /* Hover / divisores cálidos */
 
-  --accent:       #C9A961;
-  --accent-2:     #E0BE74;
-  --accent-3:     #8E7338;
+  /* Tinta — texto y trazos */
+  --ink:         #1A1F1B;  /* Tinta verdosa principal */
+  --ink-2:       #4A4F45;  /* Secundario */
+  --ink-muted:   #8A8B7E;  /* Disabled */
+  --ink-on-accent: #FBF7EE;
 
-  --accent-2nd:   #6B1F2A;
-  --accent-2nd-2: #8C2A38;
+  /* Primario — Verde botella (old money clásico) */
+  --primary:     #1F3D2B;
+  --primary-2:   #2D5240;
+  --primary-3:   #14281C;
 
-  --text:         #F4EFE3;
-  --text-2:       #A8A39A;
-  --text-muted:   #5C5A55;
-  --text-on-acc:  #0E1014;
+  /* Acento — Oro mate envejecido */
+  --accent:      #B8935E;
+  --accent-2:    #C9A878;
+  --accent-3:    #8E6D40;
 
-  --success: #4F8A6B;
-  --warning: #D4954A;
-  --danger:  #B8453E;
-  --info:    #5B7A99;
+  /* Secundario — Navy clásico (fallback / data viz) */
+  --navy:        #1A2F4F;
+  --navy-2:      #2A4470;
 
-  --border-subtle: rgba(244, 239, 227, 0.06);
-  --border-medium: rgba(244, 239, 227, 0.12);
-  --border-strong: rgba(201, 169, 97, 0.40);
+  /* Estados */
+  --success:     #3F6B4F;
+  --warning:     #B8853A;
+  --danger:      #9C4039;
+  --info:        #3F5A7A;
 
-  --lock-overlay: rgba(7, 8, 10, 0.78);
-  --lock-glow:    rgba(201, 169, 97, 0.18);
+  /* Hairlines */
+  --line-fine:   rgba(26, 31, 27, 0.08);
+  --line-medium: rgba(26, 31, 27, 0.16);
+  --line-strong: rgba(31, 61, 43, 0.32);
 
-  --background: var(--bg-void);
-  --foreground: var(--text);
+  /* Lock / feature gate */
+  --lock-overlay: rgba(251, 247, 238, 0.84);
+  --lock-glow:    rgba(184, 147, 94, 0.18);
+
+  /* Tokens de control de identidad (sobrescritos por BrandingProvider) */
+  --tenant-primary: var(--primary);
+  --tenant-accent:  var(--accent);
+  --tenant-radius:  14px;        /* sharp:4 / soft:14 / round:24 */
+  --tenant-density: 1;           /* compacta:0.85 / cómoda:1 / aireada:1.18 */
+
+  --background: var(--bg-canvas);
+  --foreground: var(--ink);
+
+  /* Easings — premium */
+  --ease-expo:   cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-quint:  cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-soft:   cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @theme inline {
-  --color-background:    var(--bg-void);
-  --color-foreground:    var(--text);
-  --color-bg-base:       var(--bg-base);
-  --color-bg-elevated:   var(--bg-elevated);
-  --color-bg-overlay:    var(--bg-overlay);
-  --color-text-2:        var(--text-2);
-  --color-text-muted:    var(--text-muted);
+  --color-background:    var(--bg-canvas);
+  --color-foreground:    var(--ink);
+  --color-bg-canvas:     var(--bg-canvas);
+  --color-bg-paper:      var(--bg-paper);
+  --color-bg-vellum:     var(--bg-vellum);
+  --color-bg-sage:       var(--bg-sage);
+  --color-ink:           var(--ink);
+  --color-ink-2:         var(--ink-2);
+  --color-ink-muted:     var(--ink-muted);
+  --color-primary:       var(--primary);
+  --color-primary-2:     var(--primary-2);
+  --color-primary-3:     var(--primary-3);
   --color-accent:        var(--accent);
   --color-accent-2:      var(--accent-2);
   --color-accent-3:      var(--accent-3);
-  --color-bordeaux:      var(--accent-2nd);
+  --color-navy:          var(--navy);
+  --color-tenant-primary: var(--tenant-primary);
+  --color-tenant-accent:  var(--tenant-accent);
   --color-success:       var(--success);
   --color-warning:       var(--warning);
   --color-danger:        var(--danger);
   --color-info:          var(--info);
-  --color-border-subtle: var(--border-subtle);
-  --color-border-medium: var(--border-medium);
-  --color-border-strong: var(--border-strong);
+  --color-line-fine:     var(--line-fine);
+  --color-line-medium:   var(--line-medium);
+  --color-line-strong:   var(--line-strong);
 
-  --font-sans:    var(--font-inter), system-ui, sans-serif;
-  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-sans:    var(--font-inter-tight), system-ui, sans-serif;
+  --font-display: var(--font-cormorant), "Garamond", Georgia, serif;
   --font-mono:    var(--font-jetbrains), ui-monospace, monospace;
 }
 
 * { box-sizing: border-box; }
 
 html, body {
-  background: var(--bg-void);
-  color: var(--text);
-  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
-  font-feature-settings: "ss01", "cv11";
+  background: var(--bg-canvas);
+  color: var(--ink);
+  font-family: var(--font-inter-tight), system-ui, -apple-system, sans-serif;
+  font-feature-settings: "ss01", "cv11", "cv02";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior-y: none;
@@ -78,97 +112,279 @@ html, body {
 body { min-height: 100vh; }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-track { background: var(--bg-canvas); }
 ::-webkit-scrollbar-thumb {
-  background: var(--bg-elevated);
+  background: var(--bg-sage);
   border-radius: 8px;
-  border: 2px solid var(--bg-base);
+  border: 2px solid var(--bg-canvas);
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent-3); }
 
-::selection { background: var(--accent); color: var(--bg-void); }
+::selection { background: var(--primary); color: var(--bg-canvas); }
 
-.texture-grain {
-  background-image:
-    radial-gradient(circle at 20% 30%, rgba(201,169,97,0.04), transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(107,31,42,0.04), transparent 50%);
+/* =========================================================
+   Texturas — papel manila sutil
+   ========================================================= */
+.texture-paper {
   position: relative;
+  background-image:
+    radial-gradient(circle at 12% 18%, rgba(184,147,94,0.06), transparent 55%),
+    radial-gradient(circle at 88% 82%, rgba(31,61,43,0.05), transparent 55%);
 }
-.texture-grain::after {
+.texture-paper::after {
   content: "";
   position: absolute; inset: 0;
   pointer-events: none;
-  opacity: 0.04;
+  opacity: 0.05;
   z-index: 0;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.7'/%3E%3C/svg%3E");
-  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.78' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
 }
 
-.text-gold-gradient {
-  background: linear-gradient(120deg, var(--accent-2) 0%, var(--accent) 30%, var(--accent-3) 60%, var(--accent-2) 100%);
+/* =========================================================
+   Tipografía — utilidades old money
+   ========================================================= */
+.font-display { font-family: var(--font-cormorant), "Garamond", Georgia, serif; font-feature-settings: "lnum","ss01"; letter-spacing: -0.01em; }
+.font-mono    { font-family: var(--font-jetbrains), ui-monospace, monospace; font-feature-settings: "tnum"; }
+.tracking-imperial { letter-spacing: 0.22em; text-transform: uppercase; }
+.tracking-noble    { letter-spacing: 0.08em; }
+
+.text-emerald-grad {
+  background: linear-gradient(118deg, var(--primary-2) 0%, var(--primary) 35%, var(--primary-3) 70%, var(--primary-2) 100%);
   background-size: 200% 100%;
   -webkit-background-clip: text;
           background-clip: text;
   color: transparent;
-  animation: gold-shift 8s ease-in-out infinite;
+  animation: gold-shift 14s ease-in-out infinite;
+}
+.text-gold-mute {
+  background: linear-gradient(120deg, var(--accent-2) 0%, var(--accent) 50%, var(--accent-3) 100%);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
 }
 @keyframes gold-shift {
   0%, 100% { background-position: 0% 50%; }
   50%      { background-position: 100% 50%; }
 }
 
+/* =========================================================
+   Animaciones old money — sutiles, sin dramatismo
+   ========================================================= */
 @keyframes breathe {
-  0%, 100% { transform: scale(1);    opacity: 0.85; filter: drop-shadow(0 0 12px rgba(201,169,97,0.30)); }
-  50%      { transform: scale(1.06); opacity: 1.00; filter: drop-shadow(0 0 24px rgba(201,169,97,0.55)); }
+  0%, 100% { transform: scale(1);    opacity: 0.92; filter: drop-shadow(0 0 10px rgba(31,61,43,0.18)); }
+  50%      { transform: scale(1.03); opacity: 1.00; filter: drop-shadow(0 0 18px rgba(31,61,43,0.28)); }
 }
-.animate-breathe { animation: breathe 2.4s cubic-bezier(0.4,0,0.2,1) infinite; }
+.animate-breathe { animation: breathe 3.2s var(--ease-soft) infinite; }
 
 @keyframes rise-in {
-  from { opacity: 0; transform: translateY(14px); }
+  from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.rise-in { animation: rise-in 0.7s cubic-bezier(0.22,1,0.36,1) both; }
+.rise-in { animation: rise-in 0.78s var(--ease-expo) both; }
 
+@keyframes reveal-clip {
+  from { clip-path: inset(0 100% 0 0); opacity: 0.3; }
+  to   { clip-path: inset(0 0 0 0);    opacity: 1; }
+}
+.reveal-clip { animation: reveal-clip 1.1s var(--ease-expo) both; }
+
+@keyframes draw-line {
+  from { stroke-dashoffset: 200; }
+  to   { stroke-dashoffset: 0; }
+}
+.draw-line { stroke-dasharray: 200; animation: draw-line 1.4s var(--ease-expo) both; }
+
+/* Hover signature: letter-spacing aumenta sutilmente, marca elegante */
+.hover-spread {
+  transition: letter-spacing 0.42s var(--ease-expo), color 0.32s var(--ease-soft);
+}
+.hover-spread:hover { letter-spacing: 0.08em; }
+
+/* =========================================================
+   Componentes utilitarios
+   ========================================================= */
 .lock-overlay {
-  background: radial-gradient(ellipse at center, var(--lock-glow) 0%, var(--lock-overlay) 70%);
-  backdrop-filter: blur(6px) saturate(0.6);
+  background: radial-gradient(ellipse at center, var(--lock-glow) 0%, var(--lock-overlay) 72%);
+  backdrop-filter: blur(7px) saturate(0.7);
 }
 
-.card-premium {
-  background: linear-gradient(145deg, var(--bg-elevated) 0%, var(--bg-base) 100%);
-  border: 1px solid var(--border-medium);
+.card-paper {
+  background: linear-gradient(160deg, var(--bg-paper) 0%, var(--bg-canvas) 100%);
+  border: 1px solid var(--line-fine);
   box-shadow:
-    0 1px 0 rgba(255,255,255,0.04) inset,
-    0 24px 48px -24px rgba(0,0,0,0.6);
-  border-radius: 18px;
+    0 1px 0 rgba(255,255,255,0.6) inset,
+    0 0 0 1px rgba(184,147,94,0.04),
+    0 24px 48px -32px rgba(31,61,43,0.18);
+  border-radius: var(--tenant-radius);
+}
+.card-vellum {
+  background: linear-gradient(160deg, var(--bg-vellum) 0%, var(--bg-paper) 100%);
+  border: 1px solid var(--line-medium);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.7) inset,
+    0 18px 40px -24px rgba(31,61,43,0.22);
+  border-radius: var(--tenant-radius);
 }
 
-.btn-gold {
-  background: linear-gradient(180deg, var(--accent-2) 0%, var(--accent) 50%, var(--accent-3) 100%);
-  color: var(--text-on-acc);
+/* Botones — tipografía display, hover con letter-spacing */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.6rem;
+  border-radius: var(--tenant-radius);
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-weight: 500;
+  font-size: 1.02rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.46s var(--ease-expo);
+  position: relative;
+  isolation: isolate;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-primary {
+  background: linear-gradient(180deg, var(--primary-2) 0%, var(--primary) 55%, var(--primary-3) 100%);
+  color: var(--ink-on-accent);
+  border: 1px solid var(--primary-3);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.18) inset,
+    0 -1px 0 rgba(0,0,0,0.22) inset,
+    0 8px 22px -10px rgba(31,61,43,0.42);
+}
+.btn-primary:hover {
+  letter-spacing: 0.07em;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.22) inset,
+    0 -1px 0 rgba(0,0,0,0.24) inset,
+    0 14px 32px -12px rgba(31,61,43,0.55);
+  transform: translateY(-1px);
+}
+
+.btn-accent {
+  background: linear-gradient(180deg, var(--accent-2) 0%, var(--accent) 55%, var(--accent-3) 100%);
+  color: var(--ink);
   border: 1px solid var(--accent-3);
   box-shadow:
-    0 1px 0 rgba(255,255,255,0.4) inset,
-    0 -1px 0 rgba(0,0,0,0.3) inset,
-    0 8px 24px -8px rgba(201,169,97,0.5);
-  transition: transform 0.18s cubic-bezier(0.22,1,0.36,1), box-shadow 0.18s ease;
+    0 1px 0 rgba(255,255,255,0.32) inset,
+    0 -1px 0 rgba(0,0,0,0.18) inset,
+    0 8px 22px -10px rgba(184,147,94,0.42);
 }
-.btn-gold:hover { transform: translateY(-1px); box-shadow: 0 1px 0 rgba(255,255,255,0.5) inset, 0 -1px 0 rgba(0,0,0,0.3) inset, 0 12px 32px -10px rgba(201,169,97,0.7); }
-.btn-gold:active { transform: translateY(0); }
+.btn-accent:hover { letter-spacing: 0.07em; transform: translateY(-1px); }
 
 .btn-ghost {
   background: transparent;
-  color: var(--text);
-  border: 1px solid var(--border-medium);
-  transition: all 0.18s ease;
+  color: var(--ink);
+  border: 1px solid var(--line-medium);
 }
-.btn-ghost:hover { border-color: var(--accent); color: var(--accent-2); background: rgba(201,169,97,0.06); }
+.btn-ghost:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(31,61,43,0.04);
+  letter-spacing: 0.07em;
+}
 
-.divider-gold {
+.btn-link {
+  background: transparent;
+  color: var(--primary);
+  padding: 0.4rem 0;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+}
+.btn-link:hover { border-bottom-color: var(--accent); letter-spacing: 0.06em; }
+
+/* Hairlines (divisores old money) */
+.hairline {
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent-3), transparent);
+  background: linear-gradient(90deg, transparent, var(--line-medium) 25%, var(--line-medium) 75%, transparent);
   border: 0;
 }
+.hairline-gold {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  border: 0;
+}
+
+/* Input estilo old money — underline con accent */
+.input-field {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line-medium);
+  padding: 0.7rem 0;
+  font-family: var(--font-inter-tight), sans-serif;
+  font-size: 1rem;
+  color: var(--ink);
+  width: 100%;
+  transition: border-color 0.32s var(--ease-soft);
+}
+.input-field:focus {
+  outline: 0;
+  border-bottom-color: var(--primary);
+}
+.input-field::placeholder { color: var(--ink-muted); }
+
+.input-boxed {
+  background: var(--bg-paper);
+  border: 1px solid var(--line-medium);
+  padding: 0.75rem 1rem;
+  font-family: var(--font-inter-tight), sans-serif;
+  font-size: 1rem;
+  color: var(--ink);
+  width: 100%;
+  border-radius: calc(var(--tenant-radius) - 4px);
+  transition: all 0.32s var(--ease-soft);
+}
+.input-boxed:focus {
+  outline: 0;
+  border-color: var(--primary);
+  background: var(--bg-canvas);
+  box-shadow: 0 0 0 3px rgba(31,61,43,0.08);
+}
+
+/* Sello / chip */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.32rem 0.78rem;
+  border-radius: 999px;
+  border: 1px solid var(--line-medium);
+  background: var(--bg-paper);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.chip-primary { border-color: var(--primary); color: var(--primary); background: rgba(31,61,43,0.04); }
+.chip-accent  { border-color: var(--accent);  color: var(--accent-3); background: rgba(184,147,94,0.06); }
+
+/* Tabla old money — bordes ínfimos, números tabulares */
+.table-clean {
+  width: 100%;
+  border-collapse: collapse;
+  font-feature-settings: "tnum";
+}
+.table-clean th {
+  text-align: left;
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-weight: 600;
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  padding: 0.85rem 0.6rem;
+  border-bottom: 1px solid var(--line-medium);
+}
+.table-clean td {
+  padding: 0.85rem 0.6rem;
+  border-bottom: 1px solid var(--line-fine);
+  color: var(--ink);
+}
+.table-clean tr:hover td { background: rgba(31,61,43,0.025); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -176,4 +392,38 @@ body { min-height: 100vh; }
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* =========================================================
+   Modo Sépia (preset Marfil & Latón) — opcional para tenants
+   ========================================================= */
+[data-mode="sepia"] {
+  --bg-canvas: #F4EAD2;
+  --bg-paper:  #ECE0BF;
+  --bg-vellum: #E4D5AA;
+  --ink:       #2A2014;
+  --ink-2:     #5A4A2C;
+  --primary:   #4A3320;
+  --accent:    #A37438;
+}
+
+/* Modo Carbón Premium (legacy dark) — para tenants que lo quieran */
+[data-mode="dark"] {
+  --bg-canvas: #0E1014;
+  --bg-paper:  #161A21;
+  --bg-vellum: #1F242D;
+  --bg-sage:   #2A2F38;
+  --ink:       #F4EFE3;
+  --ink-2:     #A8A39A;
+  --ink-muted: #5C5A55;
+  --ink-on-accent: #0E1014;
+  --primary:   #2D5240;
+  --primary-2: #3F6F58;
+  --primary-3: #1E3A2D;
+  --accent:    #C9A961;
+  --accent-2:  #E0BE74;
+  --accent-3:  #8E7338;
+  --line-fine:   rgba(244,239,227,0.06);
+  --line-medium: rgba(244,239,227,0.14);
+  --line-strong: rgba(201,169,97,0.40);
 }

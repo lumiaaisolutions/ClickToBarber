@@ -2,10 +2,20 @@ import { ReactNode } from "react";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { BrandingProvider } from "@/components/branding/BrandingProvider";
+import { FALLBACK_BRANDING, fetchAdminBranding } from "@/lib/branding-api";
 import { AUTH_COOKIE, serverAuthHeader, API_BASE } from "@/lib/auth";
 
 interface MeResponse {
-  user: { id: number; name: string; email: string; role: string };
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+    first_login_at: string | null;
+    can_write?: boolean;
+    can_see_finance?: boolean;
+  };
   tenant: { id: string; slug: string; name: string } | null;
 }
 
@@ -27,7 +37,8 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   const store = await cookies();
   const headerList = await headers();
   const pathname = headerList.get("x-invoke-path") ?? headerList.get("x-pathname") ?? "";
-  const isLoginPage = pathname.endsWith("/admin/login");
+  const isLoginPage = pathname.endsWith("/admin/login") || pathname === "/login";
+  const isOnboardingPage = pathname.endsWith("/admin/onboarding");
   const hasCookie = Boolean(store.get(AUTH_COOKIE)?.value);
 
   if (isLoginPage || !hasCookie) {
@@ -37,34 +48,61 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   const me = await getMe();
 
   if (me === "unauthorized") {
-    redirect("/admin/login");
+    redirect("/login");
   }
 
   if (me === "error" || me === null) {
     return (
       <div className="relative z-10 min-h-screen flex items-center justify-center px-6">
-        <div className="card-premium p-10 text-center max-w-md">
-          <div className="text-danger font-medium mb-2">No se pudo conectar con el API.</div>
-          <div className="text-sm text-text-2">
-            Asegúrate de que <code className="font-mono text-accent">php artisan serve</code> esté corriendo en :8000.
+        <div className="card-paper p-10 text-center max-w-md">
+          <div className="text-danger font-display italic text-2xl mb-2">No se pudo conectar</div>
+          <div className="text-sm text-ink-2">
+            Asegúrate de que <code className="font-mono text-primary">php artisan serve</code> esté corriendo en :8000.
           </div>
         </div>
       </div>
     );
   }
 
+  // Carga branding del tenant para envolver el subtree
+  const branding = (await fetchAdminBranding()) ?? FALLBACK_BRANDING;
+
+  // Si es primer login y NO está en /admin/onboarding, redirige al wizard
+  const needsOnboarding = me.user.first_login_at === null;
+  if (needsOnboarding && !isOnboardingPage) {
+    redirect("/admin/onboarding");
+  }
+
+  // Si onboarding ya completado pero está en la ruta de onboarding, redirige al dashboard
+  if (!needsOnboarding && isOnboardingPage) {
+    redirect("/admin");
+  }
+
+  // Página de onboarding: full-screen, sin sidebar, con branding ya aplicado
+  if (isOnboardingPage) {
+    return (
+      <BrandingProvider branding={branding}>
+        <div className="relative z-10 min-h-screen texture-paper">{children}</div>
+      </BrandingProvider>
+    );
+  }
+
   return (
-    <div className="relative z-10 min-h-screen flex">
-      <AdminSidebar
-        userName={me.user.name}
-        userEmail={me.user.email}
-        tenantSlug={me.tenant?.slug ?? null}
-      />
-      <main className="flex-1 ml-0 md:ml-[260px] min-h-screen">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          {children}
-        </div>
-      </main>
-    </div>
+    <BrandingProvider branding={branding}>
+      <div className="relative z-10 min-h-screen flex">
+        <AdminSidebar
+          userName={me.user.name}
+          userEmail={me.user.email}
+          userRole={me.user.role}
+          tenantName={me.tenant?.name}
+          tenantSlug={me.tenant?.slug ?? null}
+        />
+        <main className="flex-1 ml-0 md:ml-[268px] min-h-screen">
+          <div className="max-w-7xl mx-auto px-6 py-10">
+            {children}
+          </div>
+        </main>
+      </div>
+    </BrandingProvider>
   );
 }

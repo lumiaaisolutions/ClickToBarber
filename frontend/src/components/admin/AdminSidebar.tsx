@@ -13,6 +13,7 @@ import {
   Megaphone,
   CircleDollarSign,
   Settings2,
+  Palette,
   ExternalLink,
   LogOut,
 } from "lucide-react";
@@ -21,21 +22,24 @@ import { cn } from "@/lib/utils";
 const NAV = [
   { href: "/admin",            label: "Dashboard",     icon: LayoutDashboard },
   { href: "/admin/agenda",     label: "Agenda",        icon: CalendarDays },
-  { href: "/admin/staff",      label: "Barberos",      icon: Users },
+  { href: "/admin/staff",      label: "Personal",      icon: Users },
   { href: "/admin/services",   label: "Servicios",     icon: Scissors },
-  { href: "/admin/pos",        label: "POS / Productos", icon: ShoppingBag, feature: "pos_inventory" as const },
+  { href: "/admin/pos",        label: "POS · Inventario", icon: ShoppingBag, feature: "pos_inventory" as const },
   { href: "/admin/marketing",  label: "Marketing",     icon: Megaphone, feature: "marketing_retention" as const },
   { href: "/admin/finance",    label: "Finanzas",      icon: CircleDollarSign, feature: "finance_reports" as const },
+  { href: "/admin/identity",   label: "Identidad",     icon: Palette },
   { href: "/admin/billing",    label: "Suscripción",   icon: Settings2 },
 ];
 
 interface AdminSidebarProps {
   userName: string;
   userEmail: string;
+  userRole?: string;
+  tenantName?: string;
   tenantSlug: string | null;
 }
 
-export function AdminSidebar({ userName, userEmail, tenantSlug }: AdminSidebarProps) {
+export function AdminSidebar({ userName, userEmail, userRole, tenantName, tenantSlug }: AdminSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -43,20 +47,36 @@ export function AdminSidebar({ userName, userEmail, tenantSlug }: AdminSidebarPr
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST", cache: "no-store" });
     startTransition(() => {
-      router.replace("/admin/login");
+      router.replace("/login");
       router.refresh();
     });
   }
 
+  const roleLabel = (() => {
+    switch (userRole) {
+      case "admin":            return "Administrador";
+      case "platform_owner":   return "Owner LUMIA";
+      case "manager":          return "Gerente";
+      case "receptionist":     return "Recepcionista";
+      case "barber":           return "Barbero";
+      default:                 return "";
+    }
+  })();
+
   return (
-    <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-[260px] flex-col border-r border-border-subtle bg-bg-base/60 backdrop-blur-md p-5 z-20">
-      <Link href="/admin" className="flex items-center gap-3 mb-10 mt-1">
-        <Logo size={36} />
-        <div>
-          <div className="font-display text-lg leading-none">BarberPro</div>
-          <div className="text-[10px] uppercase tracking-wider text-text-muted mt-1">Portal Admin</div>
-        </div>
+    <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-[268px] flex-col border-r border-line-fine bg-bg-paper/85 backdrop-blur-md p-6 z-20">
+      <Link href="/admin" className="flex items-center gap-3 mb-2 mt-1 text-primary">
+        <Logo size={28} />
       </Link>
+
+      {tenantName && (
+        <div className="mt-2 mb-8">
+          <div className="font-display italic text-ink text-xl leading-tight">{tenantName}</div>
+          <div className="text-[10px] uppercase tracking-[0.28em] text-ink-muted mt-2">
+            Portal {roleLabel || "Admin"}
+          </div>
+        </div>
+      )}
 
       <nav className="flex-1 flex flex-col gap-1">
         {NAV.map((item) => {
@@ -67,16 +87,16 @@ export function AdminSidebar({ userName, userEmail, tenantSlug }: AdminSidebarPr
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition group",
+                "flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-sm transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
                 active
-                  ? "bg-accent/10 text-accent border border-accent/30"
-                  : "text-text-2 hover:text-text hover:bg-bg-overlay/40 border border-transparent",
+                  ? "bg-primary/8 text-primary border border-primary/24 font-medium"
+                  : "text-ink-2 hover:text-primary hover:bg-bg-sage/40 border border-transparent",
               )}
             >
-              <Icon size={18} strokeWidth={1.6} />
-              <span className="flex-1">{item.label}</span>
+              <Icon size={17} strokeWidth={1.5} />
+              <span className="flex-1 tracking-noble">{item.label}</span>
               {item.feature && (
-                <span className="text-[9px] uppercase tracking-widest text-accent-2/80 opacity-70 group-hover:opacity-100">PRO</span>
+                <span className="text-[9px] uppercase tracking-widest text-accent-3 opacity-70">PRO</span>
               )}
             </Link>
           );
@@ -84,27 +104,27 @@ export function AdminSidebar({ userName, userEmail, tenantSlug }: AdminSidebarPr
       </nav>
 
       {tenantSlug && (
-        <div className="mt-6 p-4 rounded-xl border border-border-medium bg-gradient-to-b from-bordeaux/30 to-transparent">
-          <div className="font-display text-sm">Vista Cliente</div>
-          <p className="text-xs text-text-2 mt-1 mb-3">Mira tu barbería como la ven tus clientes.</p>
-          <Link href={`/b/${tenantSlug}`} className="text-xs text-accent inline-flex items-center gap-1 hover:underline">
-            Abrir vista pública <ExternalLink size={12} />
+        <div className="mt-6 p-4 rounded-[14px] border border-line-medium bg-gradient-to-b from-bg-vellum to-transparent">
+          <div className="font-display italic text-sm text-ink">Vista pública</div>
+          <p className="text-xs text-ink-2 mt-1 mb-3">Como la ven tus clientes.</p>
+          <Link href={`/b/${tenantSlug}`} target="_blank" className="text-xs text-primary inline-flex items-center gap-1.5 hover-spread">
+            Abrir <ExternalLink size={12} />
           </Link>
         </div>
       )}
 
-      <div className="mt-4 pt-4 border-t border-border-subtle">
-        <div className="text-xs text-text-muted">
+      <div className="mt-4 pt-4 border-t border-line-fine">
+        <div className="text-xs text-ink">
           {userName}
-          <div className="text-[10px] text-accent-2/70 mt-0.5">{userEmail}</div>
+          <div className="text-[10px] text-ink-muted mt-0.5 font-mono">{userEmail}</div>
         </div>
         <button
           type="button"
           onClick={handleLogout}
           disabled={pending}
-          className="mt-3 w-full flex items-center gap-2 text-xs text-text-2 hover:text-danger transition disabled:opacity-50"
+          className="mt-3 w-full flex items-center gap-2 text-xs text-ink-2 hover:text-danger transition disabled:opacity-50"
         >
-          <LogOut size={14} strokeWidth={1.6} />
+          <LogOut size={13} strokeWidth={1.6} />
           <span>{pending ? "Cerrando sesión…" : "Cerrar sesión"}</span>
         </button>
       </div>

@@ -28,40 +28,54 @@ export function LoginForm() {
       return;
     }
 
+    const json = (await res.json().catch(() => null)) as {
+      tenant?: { slug: string } | null;
+      user?: { first_login_at?: string | null };
+    } | null;
+
+    const slug = json?.tenant?.slug;
+    const isFirstLogin = json?.user?.first_login_at == null;
+    const target =
+      slug && isFirstLogin
+        ? `/admin/${slug}/onboarding`
+        : slug
+          ? `/admin/${slug}`
+          : "/admin";
+
     startTransition(() => {
-      router.replace("/admin");
+      router.replace(target);
       router.refresh();
     });
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={onSubmit} className="space-y-5">
       <div>
-        <label className="text-xs uppercase tracking-wider text-text-2 mb-2 block">Email</label>
+        <label className="text-[10px] tracking-imperial text-ink-2 mb-2 block">Email</label>
         <input
           type="email"
           required
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full bg-bg-overlay/40 border border-border-medium rounded-lg px-4 py-3 text-text focus:border-accent focus:outline-none transition"
+          className="input-boxed"
         />
       </div>
 
       <div>
-        <label className="text-xs uppercase tracking-wider text-text-2 mb-2 block">Contraseña</label>
+        <label className="text-[10px] tracking-imperial text-ink-2 mb-2 block">Contraseña</label>
         <input
           type="password"
           required
           autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full bg-bg-overlay/40 border border-border-medium rounded-lg px-4 py-3 text-text focus:border-accent focus:outline-none transition"
+          className="input-boxed"
         />
       </div>
 
       {error && (
-        <div className="text-sm text-danger bg-danger/10 border border-danger/30 rounded-lg px-4 py-3">
+        <div className="text-sm text-danger bg-danger/8 border border-danger/30 rounded-[10px] px-4 py-3">
           {error}
         </div>
       )}
@@ -69,9 +83,9 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="w-full bg-accent hover:bg-accent-2 text-on-accent font-medium rounded-lg px-4 py-3 transition disabled:opacity-50"
+        className="btn btn-primary w-full justify-center"
       >
-        {pending ? "Entrando…" : "Entrar"}
+        {pending ? "Entrando…" : "Iniciar sesión"}
       </button>
     </form>
   );

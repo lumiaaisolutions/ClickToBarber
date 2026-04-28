@@ -20,7 +20,7 @@ export default async function MarketingPage() {
       <header>
         <div className="text-xs uppercase tracking-[0.3em] text-accent mb-2">Marketing</div>
         <h1 className="font-display text-4xl">Retención de clientes</h1>
-        <p className="text-text-2 text-sm mt-1">
+        <p className="text-ink-2 text-sm mt-1">
           Detecta clientes que llevan tiempo sin volver y dispara una campaña en un clic.
         </p>
       </header>

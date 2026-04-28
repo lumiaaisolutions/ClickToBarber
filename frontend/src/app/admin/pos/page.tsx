@@ -21,7 +21,7 @@ export default async function POSPage() {
       <header>
         <div className="text-xs uppercase tracking-[0.3em] text-accent mb-2">POS · Inventario</div>
         <h1 className="font-display text-4xl">Productos</h1>
-        <p className="text-text-2 text-sm mt-1">Cobra productos junto con servicios y mantén el stock al día.</p>
+        <p className="text-ink-2 text-sm mt-1">Cobra productos junto con servicios y mantén el stock al día.</p>
       </header>
 
       <FeatureGate
@@ -32,11 +32,11 @@ export default async function POSPage() {
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {products.map((p) => (
-            <div key={p.id} className="card-premium p-5">
+            <div key={p.id} className="card-paper p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h2 className="font-display text-lg">{p.name}</h2>
-                  <div className="text-xs text-text-muted font-mono mt-1">{p.sku}</div>
+                  <div className="text-xs text-ink-muted font-mono mt-1">{p.sku}</div>
                 </div>
                 {p.low_stock && (
                   <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-warning/15 text-warning border border-warning/30">
@@ -46,13 +46,13 @@ export default async function POSPage() {
               </div>
               <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <div className="text-xs text-text-muted uppercase tracking-wider">Precio</div>
+                  <div className="text-xs text-ink-muted uppercase tracking-wider">Precio</div>
                   <div className="font-display text-xl text-accent tabular-nums">{fmtCents(p.price_cents, p.currency)}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-text-muted uppercase tracking-wider">Stock</div>
+                  <div className="text-xs text-ink-muted uppercase tracking-wider">Stock</div>
                   <div className="font-display text-xl tabular-nums">
-                    {p.stock} <span className="text-text-muted text-xs">/ min {p.stock_min}</span>
+                    {p.stock} <span className="text-ink-muted text-xs">/ min {p.stock_min}</span>
                   </div>
                 </div>
               </div>

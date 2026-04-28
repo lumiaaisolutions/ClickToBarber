@@ -1,7 +1,94 @@
 import { cn } from "@/lib/utils";
 
-/** Logo BarberPro: navaja estilizada + monograma. SVG inline para animaciones. */
-export function Logo({ className, size = 48 }: { className?: string; size?: number }) {
+/**
+ * LUMIA — wordmark con tijera como punto de la "i".
+ * El SVG hereda color de currentColor: úsalo con className="text-primary".
+ * El grupo `.scissor` se anima en hover (apertura sutil de hojas).
+ */
+export function Logo({
+  className,
+  size = 140,
+  variant = "wordmark",
+}: {
+  className?: string;
+  size?: number;
+  variant?: "wordmark" | "mark";
+}) {
+  if (variant === "mark") {
+    return <LogoMark className={className} size={size} />;
+  }
+
+  const height = size;
+  const width = (size * 220) / 64; // 220:64 ≈ 3.44
+
+  return (
+    <svg
+      width={width}
+      height={height}
+      viewBox="0 0 220 64"
+      xmlns="http://www.w3.org/2000/svg"
+      className={cn("block lumia-logo", className)}
+      role="img"
+      aria-label="LUMIA"
+      style={{ overflow: "visible" }}
+    >
+      <text
+        x="0"
+        y="50"
+        fontFamily="var(--font-cormorant), 'Cormorant Garamond', Garamond, Georgia, serif"
+        fontSize="56"
+        fontWeight="500"
+        fontStyle="italic"
+        fill="currentColor"
+        letterSpacing="0.02em"
+      >
+        lum
+        {/* trazo vertical de la "i" sin punto: usamos tspan invisible para reservar ancho */}
+        <tspan dx="0" style={{ letterSpacing: "0.02em" }}>ı</tspan>
+        a
+      </text>
+
+      {/* Tijera diminuta como punto de la "i" */}
+      <g
+        className="scissor"
+        transform="translate(102 12) rotate(-12)"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {/* Mangos (anillos) */}
+        <circle cx="-3.2" cy="0" r="2.4" />
+        <circle cx="3.2"  cy="0" r="2.4" />
+        {/* Hojas cruzadas */}
+        <path d="M -1.4 1.6 L 6.5 9.2" />
+        <path d="M 1.4 1.6 L -6.5 9.2" />
+        {/* Pivote */}
+        <circle cx="0" cy="3.4" r="0.6" fill="currentColor" stroke="none" />
+      </g>
+
+      <style>{`
+        .lumia-logo .scissor {
+          transform-origin: 102px 16px;
+          transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .lumia-logo:hover .scissor {
+          transform: translate(102px, 12px) rotate(2deg);
+        }
+      `}</style>
+    </svg>
+  );
+}
+
+/** Marca compacta — solo la tijera. Para favicons, sidebar colapsado, app icons. */
+export function LogoMark({
+  className,
+  size = 48,
+}: {
+  className?: string;
+  size?: number;
+}) {
   return (
     <svg
       width={size}
@@ -10,49 +97,51 @@ export function Logo({ className, size = 48 }: { className?: string; size?: numb
       xmlns="http://www.w3.org/2000/svg"
       className={cn("block", className)}
       role="img"
-      aria-label="BarberPro"
+      aria-label="LUMIA"
     >
-      <defs>
-        <linearGradient id="bp-gold" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#E0BE74" />
-          <stop offset="55%" stopColor="#C9A961" />
-          <stop offset="100%" stopColor="#8E7338" />
-        </linearGradient>
-        <linearGradient id="bp-blade" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#F4EFE3" />
-          <stop offset="100%" stopColor="#A8A39A" />
-        </linearGradient>
-      </defs>
-
-      {/* Anillo dorado exterior */}
-      <circle cx="32" cy="32" r="29" fill="none" stroke="url(#bp-gold)" strokeWidth="2" />
-      <circle cx="32" cy="32" r="29" fill="#0E1014" opacity="0.9" />
-
-      {/* Navaja: hoja diagonal */}
-      <path
-        d="M16 44 L40 20 L46 22 L22 46 Z"
-        fill="url(#bp-blade)"
-        stroke="#C9A961"
+      {/* Anillo decorativo */}
+      <circle
+        cx="32"
+        cy="32"
+        r="29"
+        fill="none"
+        stroke="currentColor"
         strokeWidth="0.8"
-        strokeLinejoin="round"
+        opacity="0.4"
       />
-      {/* Mango */}
-      <rect x="40" y="18" width="10" height="6" rx="1.5" fill="#6B1F2A" stroke="#C9A961" strokeWidth="0.6" transform="rotate(-45 45 21)" />
-      {/* Pivote */}
-      <circle cx="40" cy="20" r="1.6" fill="#C9A961" />
 
-      {/* Monograma "BP" sutil arriba */}
+      <g
+        transform="translate(32 22)"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {/* Mangos */}
+        <circle cx="-7" cy="0" r="5.5" />
+        <circle cx="7"  cy="0" r="5.5" />
+        {/* Hojas cruzadas */}
+        <path d="M -3.4 3.6 L 14 22" />
+        <path d="M 3.4 3.6 L -14 22" />
+        {/* Pivote */}
+        <circle cx="0" cy="7" r="1.4" fill="currentColor" stroke="none" />
+      </g>
+
+      {/* Detalle: monograma "L" sutil debajo */}
       <text
         x="32"
-        y="14"
+        y="58"
         textAnchor="middle"
-        fontSize="6"
-        fontFamily="serif"
-        fontWeight="700"
-        fill="#C9A961"
-        opacity="0.9"
+        fontFamily="var(--font-cormorant), 'Cormorant Garamond', Garamond, serif"
+        fontSize="8"
+        fontStyle="italic"
+        fontWeight="600"
+        fill="currentColor"
+        opacity="0.85"
+        letterSpacing="0.4em"
       >
-        BP
+        LUMIA
       </text>
     </svg>
   );

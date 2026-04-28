@@ -40,11 +40,11 @@ export function MarketingClient({ initialData }: { initialData: Data }) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2 card-premium p-6">
+      <div className="lg:col-span-2 card-paper p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="font-display text-xl">Clientes inactivos +{initialData.days_threshold} días</h2>
-            <p className="text-xs text-text-2">{selected.size} de {initialData.clients.length} seleccionados</p>
+            <p className="text-xs text-ink-2">{selected.size} de {initialData.clients.length} seleccionados</p>
           </div>
           <button
             onClick={() => setSelected(selected.size === initialData.clients.length ? new Set() : new Set(initialData.clients.map((c) => c.id)))}
@@ -68,10 +68,10 @@ export function MarketingClient({ initialData }: { initialData: Data }) {
                 <input type="checkbox" checked={checked} onChange={() => toggle(c.id)} className="accent-[var(--accent)]" />
                 <div className="flex-1 min-w-0">
                   <div className="font-medium truncate">{c.name}</div>
-                  <div className="text-xs text-text-2">{c.email} · {c.phone}</div>
+                  <div className="text-xs text-ink-2">{c.email} · {c.phone}</div>
                 </div>
                 <div className="text-right shrink-0">
-                  <div className="text-xs text-text-muted">{c.last_visit ? "Última visita" : "Sin visitas"}</div>
+                  <div className="text-xs text-ink-muted">{c.last_visit ? "Última visita" : "Sin visitas"}</div>
                   <div className="text-sm font-mono">
                     {c.days_since ? `${c.days_since} días` : "—"}
                   </div>
@@ -82,7 +82,7 @@ export function MarketingClient({ initialData }: { initialData: Data }) {
         </div>
       </div>
 
-      <div className="card-premium p-6 h-fit sticky top-8">
+      <div className="card-paper p-6 h-fit sticky top-8">
         <div className="flex items-center gap-2 text-accent text-xs uppercase tracking-widest mb-3">
           <MessageCircle size={14} />
           Campaña WhatsApp
@@ -90,7 +90,7 @@ export function MarketingClient({ initialData }: { initialData: Data }) {
         <h3 className="font-display text-2xl mb-3">Reactivar clientes</h3>
 
         <label className="block mb-4">
-          <span className="text-xs text-text-muted uppercase tracking-wider">Cupón de descuento</span>
+          <span className="text-xs text-ink-muted uppercase tracking-wider">Cupón de descuento</span>
           <div className="mt-1.5 flex items-center gap-2">
             <input
               type="range"
@@ -105,7 +105,7 @@ export function MarketingClient({ initialData }: { initialData: Data }) {
           </div>
         </label>
 
-        <div className="rounded-xl bg-bg-overlay/40 border border-border-medium p-4 text-sm whitespace-pre-line mb-4">
+        <div className="rounded-xl bg-bg-sage/40 border border-line-medium p-4 text-sm whitespace-pre-line mb-4">
 {`¡Hola {{nombre}}! 💈
 Hace tiempo que no nos vemos en El Navajazo.
 
@@ -133,14 +133,14 @@ Reserva: bit.ly/navajazo-vip`}
               animate={{ opacity: 1 }}
               onClick={send}
               disabled={selected.size === 0}
-              className="w-full btn-gold py-3 rounded-full text-sm font-medium inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full btn btn-accent py-3 rounded-full text-sm font-medium inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send size={15} /> Enviar a {selected.size} clientes
             </motion.button>
           )}
         </AnimatePresence>
 
-        <div className="mt-4 text-[11px] text-text-muted flex items-start gap-1.5">
+        <div className="mt-4 text-[11px] text-ink-muted flex items-start gap-1.5">
           <Sparkles size={11} className="mt-0.5 shrink-0 text-accent" />
           Los cupones son únicos por cliente y trazables hasta el cobro.
         </div>

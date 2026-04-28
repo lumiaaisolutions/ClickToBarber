@@ -4,14 +4,12 @@ import { useEffect, useState } from "react";
 import { Logo } from "./Logo";
 
 /**
- * Preloader que cubre la pantalla durante la primera visita de la sesión.
- * Estrategia robusta: se quita siempre tras 1100ms desde que monta, sin
- * depender del evento `load` (que en dev con Turbopack/HMR puede tardar).
- * En navegaciones SPA posteriores no se vuelve a mostrar (sessionStorage).
+ * Preloader LUMIA — papel manila + wordmark con tijera animada.
+ * Aparece sólo en la primera visita de la sesión.
  */
 export function Preloader() {
   const [phase, setPhase] = useState<"hidden" | "visible" | "fading">(() => {
-    if (typeof window !== "undefined" && sessionStorage.getItem("bp:preload-shown") === "1") {
+    if (typeof window !== "undefined" && sessionStorage.getItem("lumia:preload-shown") === "1") {
       return "hidden";
     }
     return "visible";
@@ -19,13 +17,11 @@ export function Preloader() {
 
   useEffect(() => {
     if (phase === "hidden") return;
-
     const fadeTimer = setTimeout(() => setPhase("fading"), 1100);
     const hideTimer = setTimeout(() => {
       setPhase("hidden");
-      try { sessionStorage.setItem("bp:preload-shown", "1"); } catch {}
-    }, 1100 + 480);
-
+      try { sessionStorage.setItem("lumia:preload-shown", "1"); } catch {}
+    }, 1100 + 520);
     return () => {
       clearTimeout(fadeTimer);
       clearTimeout(hideTimer);
@@ -36,22 +32,22 @@ export function Preloader() {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex flex-col items-center justify-center"
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-center texture-paper"
       style={{
-        background: "var(--bg-void)",
+        background: "var(--bg-canvas)",
         opacity: phase === "fading" ? 0 : 1,
-        transition: "opacity 480ms cubic-bezier(0.22,1,0.36,1)",
+        transition: "opacity 520ms cubic-bezier(0.16, 1, 0.3, 1)",
         pointerEvents: phase === "fading" ? "none" : "auto",
       }}
       aria-hidden={phase === "fading"}
     >
-      <div className="animate-breathe">
-        <Logo size={88} />
+      <div className="animate-breathe text-primary">
+        <Logo size={56} />
       </div>
-      <div className="mt-8 font-display text-sm tracking-[0.4em] text-text-2 uppercase">
-        BarberPro
+      <hr className="hairline-gold w-32 mt-10" />
+      <div className="mt-6 font-display italic text-sm tracking-imperial text-ink-2">
+        Software de barbería con identidad propia
       </div>
-      <div className="mt-2 text-xs text-text-muted">Cargando experiencia premium…</div>
     </div>
   );
 }

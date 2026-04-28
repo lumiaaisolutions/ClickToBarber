@@ -12,7 +12,7 @@ const STATUS_COLOR: Record<string, string> = {
   in_progress:           "bg-info/15 text-info border-info/30",
   completed:             "bg-accent/15 text-accent border-accent/30",
   cancelled:             "bg-danger/15 text-danger border-danger/30",
-  no_show:               "bg-bordeaux/30 text-text-2 border-bordeaux/40",
+  no_show:               "bg-accent-3/30 text-ink-2 border-accent-3/40",
 };
 
 export function AgendaView({ appointments }: { appointments: AppointmentDto[] }) {
@@ -28,7 +28,7 @@ export function AgendaView({ appointments }: { appointments: AppointmentDto[] })
 
   if (byDay.length === 0) {
     return (
-      <div className="card-premium p-10 text-center text-text-muted">
+      <div className="card-paper p-10 text-center text-ink-muted">
         No hay citas en el rango seleccionado.
       </div>
     );
@@ -49,22 +49,22 @@ export function AgendaView({ appointments }: { appointments: AppointmentDto[] })
               <div className="font-display text-2xl">
                 {d.toLocaleDateString("es-MX", { weekday: "long", day: "2-digit", month: "long" })}
               </div>
-              <div className="text-xs text-text-muted">{items.length} cita{items.length !== 1 && "s"}</div>
+              <div className="text-xs text-ink-muted">{items.length} cita{items.length !== 1 && "s"}</div>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
               {items.map((a) => (
-                <div key={a.id} className="card-premium p-5 hover:border-border-strong transition">
+                <div key={a.id} className="card-paper p-5 hover:border-line-strong transition">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
                         <Clock size={14} className="text-accent" />
                         <span className="font-mono text-sm tabular-nums">{fmtTime(a.starts_at)}</span>
-                        <span className="text-text-muted text-xs">→ {fmtTime(a.ends_at)}</span>
+                        <span className="text-ink-muted text-xs">→ {fmtTime(a.ends_at)}</span>
                       </div>
                       <div className="font-display text-lg truncate">{a.service.name}</div>
-                      <div className="flex items-center gap-1.5 text-xs text-text-2 mt-1">
+                      <div className="flex items-center gap-1.5 text-xs text-ink-2 mt-1">
                         <Scissors size={11} /> {a.barber.name}
-                        <span className="text-text-muted mx-1">·</span>
+                        <span className="text-ink-muted mx-1">·</span>
                         <User size={11} /> {a.client.name}
                       </div>
                     </div>

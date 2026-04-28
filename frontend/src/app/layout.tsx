@@ -1,19 +1,19 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Inter, JetBrains_Mono } from "next/font/google";
+import { Cormorant_Garamond, Inter_Tight, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Preloader } from "@/components/Preloader";
 import { LenisProvider } from "@/components/LenisProvider";
-import { Background3D } from "@/components/Background3D";
 
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
+const cormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
   subsets: ["latin"],
-  weight: ["400", "600", "800"],
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
   display: "swap",
 });
 
-const inter = Inter({
-  variable: "--font-inter",
+const interTight = Inter_Tight({
+  variable: "--font-inter-tight",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
@@ -27,14 +27,15 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BarberPro — La barbería ya tiene navaja. Ahora tiene sistema.",
+  title: "LUMIA — Software de barbería con identidad propia.",
   description:
-    "Plataforma SaaS multi-tenant para barberías premium: agenda, anti no-show con WhatsApp, marketing de retención, POS y finanzas.",
-  applicationName: "BarberPro",
+    "Plataforma SaaS multi-tenant para barberías de autor: agenda inteligente, anti no-show vía WhatsApp, marketing de retención, POS y finanzas. Cada barbería con su propia identidad visual.",
+  applicationName: "LUMIA",
+  authors: [{ name: "LUMIA AI Solutions", url: "https://lumiaaisolutions.com" }],
 };
 
 export const viewport: Viewport = {
-  themeColor: "#07080A",
+  themeColor: "#FBF7EE",
   initialScale: 1,
   width: "device-width",
 };
@@ -43,12 +44,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="es"
-      className={`${fraunces.variable} ${inter.variable} ${jetbrains.variable} h-full antialiased`}
+      className={`${cormorant.variable} ${interTight.variable} ${jetbrains.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col texture-grain">
+      <body className="min-h-full flex flex-col texture-paper">
         <Preloader />
-        <Background3D />
         <LenisProvider>
           {children}
         </LenisProvider>

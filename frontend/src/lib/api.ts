@@ -1,5 +1,5 @@
 /**
- * Cliente HTTP del API BarberPro.
+ * Cliente HTTP del API LUMIA.
  * Maneja:
  *   - Authorization: Bearer <token Sanctum> leído de la cookie httpOnly
  *     en server components (vía next/headers).

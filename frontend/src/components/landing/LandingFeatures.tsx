@@ -1,36 +1,38 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Calendar, MessageCircle, PhoneCall, ShoppingBag, Users, BarChart3, Sparkles, Zap } from "lucide-react";
+import { Calendar, MessageCircle, PhoneCall, ShoppingBag, Users, BarChart3, Sparkles, Palette } from "lucide-react";
 
 const FEATURES = [
-  { icon: Calendar, title: "Agenda viva", desc: "Calendario por barbero, slots inteligentes y validación contra horarios y no-show.", tag: "Core" },
+  { icon: Calendar,      title: "Agenda viva",          desc: "Calendario por barbero con slots inteligentes y validación contra horarios.", tag: "Core" },
   { icon: MessageCircle, title: "WhatsApp anti no-show", desc: "Confirmación T-2h con botones. Sin respuesta a 1h = cancelación automática.", tag: "Pro" },
-  { icon: PhoneCall, title: "Llamada Twilio", desc: "Último recurso antes de cancelar. El cliente lo siente, el ticket se respeta.", tag: "Pro" },
-  { icon: ShoppingBag, title: "POS + Inventario", desc: "Cobra servicios y productos. Stock se actualiza atómicamente al cobrar.", tag: "Pro" },
-  { icon: Users, title: "Multi-barbero", desc: "Cada uno con sus horarios, sus servicios, su comisión.", tag: "Starter" },
-  { icon: Sparkles, title: "Retención 1-clic", desc: "Detecta clientes inactivos +30 días. WhatsApp con cupón único trazable.", tag: "Pro" },
-  { icon: BarChart3, title: "Finanzas", desc: "Cierre de caja, comisiones, reportes contables exportables.", tag: "Enterprise" },
-  { icon: Zap, title: "Multi-tenant nativo", desc: "Aislamiento por tenant_id + Row Level Security en PostgreSQL.", tag: "Core" },
+  { icon: PhoneCall,     title: "Llamada Twilio",        desc: "Último recurso antes de cancelar. El cliente lo siente, el ticket se respeta.", tag: "Pro" },
+  { icon: ShoppingBag,   title: "POS + Inventario",      desc: "Cobra servicios y productos. Stock se actualiza atómicamente al cobrar.", tag: "Pro" },
+  { icon: Users,         title: "Multi-rol",             desc: "Admin, Recepción, Barbero, Gerente. Cada uno con su vista y sus permisos.", tag: "Starter" },
+  { icon: Sparkles,      title: "Retención 1-clic",      desc: "Detecta clientes inactivos +30 días. WhatsApp con cupón único trazable.", tag: "Pro" },
+  { icon: BarChart3,     title: "Finanzas",              desc: "Cierre de caja, comisiones, reportes contables exportables.", tag: "Enterprise" },
+  { icon: Palette,       title: "White-label nativo",    desc: "Tu paleta, tu logo, tu tipografía. Cada link de barbería con su propia identidad.", tag: "Core" },
 ];
 
 export function LandingFeatures() {
   return (
-    <section id="features" className="relative py-32 px-6">
+    <section id="features" className="relative py-32 px-6 bg-bg-paper/40">
       <div className="max-w-7xl mx-auto">
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="text-center mb-16"
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="text-center mb-20"
         >
-          <div className="text-xs uppercase tracking-[0.3em] text-accent mb-3">Funcionalidades</div>
-          <h2 className="font-display text-4xl sm:text-6xl tracking-tight">
-            Todo lo que la <span className="text-gold-gradient">barbería</span> necesita
+          <div className="text-[10px] tracking-imperial text-accent-3 mb-4">Funciones</div>
+          <h2 className="font-display italic text-[clamp(2.4rem,5.5vw,5rem)] leading-[1.02] text-ink">
+            Todo lo que la barbería
+            <br />
+            <span className="text-emerald-grad">necesita.</span>
           </h2>
-          <p className="mt-4 text-text-2 max-w-2xl mx-auto">
-            Cada feature visible. Las premium con candado dorado. El cliente ve lo que se está perdiendo.
+          <p className="mt-6 text-ink-2 max-w-2xl mx-auto leading-relaxed">
+            Cada función visible. Las premium con candado dorado. El cliente ve lo que se está perdiendo.
           </p>
         </motion.div>
 
@@ -40,22 +42,22 @@ export function LandingFeatures() {
             return (
               <motion.div
                 key={f.title}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 18 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-60px" }}
-                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: i * 0.05 }}
-                className="card-premium p-6 group hover:border-border-strong transition"
+                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: i * 0.05 }}
+                className="card-paper p-7 group hover:shadow-[0_28px_56px_-30px_rgba(31,61,43,0.32)] transition-all duration-500"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="p-2.5 rounded-xl bg-accent/10 text-accent group-hover:bg-accent/20 transition">
-                    <Icon size={22} strokeWidth={1.6} />
+                <div className="flex items-start justify-between mb-5">
+                  <div className="p-2.5 rounded-[12px] bg-primary/8 text-primary border border-primary/16 group-hover:bg-primary/12 transition-colors duration-500">
+                    <Icon size={20} strokeWidth={1.5} />
                   </div>
-                  <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded-full border border-border-medium text-text-muted">
+                  <span className="text-[9px] tracking-imperial px-2 py-1 rounded-full border border-line-medium text-ink-muted">
                     {f.tag}
                   </span>
                 </div>
-                <h3 className="font-display text-xl mb-2">{f.title}</h3>
-                <p className="text-sm text-text-2 leading-relaxed">{f.desc}</p>
+                <h3 className="font-display italic text-2xl mb-2 text-ink">{f.title}</h3>
+                <p className="text-sm text-ink-2 leading-relaxed">{f.desc}</p>
               </motion.div>
             );
           })}

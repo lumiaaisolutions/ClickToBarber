@@ -6,9 +6,9 @@ import { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * FeatureGate: renderiza el children y, si no está habilitada la feature en el plan
- * actual del tenant, lo bloquea visualmente con un overlay con candado dorado y
- * CTA de upgrade. La validación real ocurre en el backend (middleware EnsureFeatureEnabled).
+ * FeatureGate: si la feature no está habilitada en el plan del tenant,
+ * blurrea el children y monta un overlay con candado dorado y CTA upgrade.
+ * La validación real ocurre en el backend (middleware EnsureFeatureEnabled).
  */
 export function FeatureGate({
   feature,
@@ -35,30 +35,30 @@ export function FeatureGate({
         aria-hidden
         className="pointer-events-none select-none"
         style={{
-          filter: "blur(5px) grayscale(0.65) brightness(0.6)",
-          opacity: 0.55,
+          filter: "blur(5px) grayscale(0.55) brightness(1.05)",
+          opacity: 0.6,
           transform: "scale(1.01)",
         }}
       >
         {children}
       </div>
 
-      <div className="absolute inset-0 lock-overlay flex flex-col items-center justify-center text-center p-8">
-        <div className="rounded-full p-3 mb-4 border border-border-strong bg-bg-base/70 backdrop-blur-sm">
-          <Lock className="text-accent" size={26} strokeWidth={1.6} />
+      <div className="absolute inset-0 lock-overlay flex flex-col items-center justify-center text-center p-10">
+        <div className="rounded-full p-3.5 mb-5 border border-line-strong bg-bg-paper/90 shadow-[0_12px_32px_-16px_rgba(31,61,43,0.28)]">
+          <Lock className="text-accent-3" size={24} strokeWidth={1.6} />
         </div>
-        <div className="font-display text-xl text-text mb-1">Función premium</div>
-        <div className="text-sm text-text-2 max-w-xs mb-1">
-          <code className="text-accent font-mono text-xs px-1.5 py-0.5 rounded bg-bg-elevated/60">
+        <div className="font-display italic text-2xl text-ink mb-1">Función premium</div>
+        <div className="text-sm text-ink-2 max-w-xs leading-relaxed">
+          <code className="text-primary font-mono text-xs px-1.5 py-0.5 rounded bg-bg-paper/80 border border-line-fine">
             {feature}
           </code>{" "}
-          requiere {requiredPlan ? <strong className="text-accent-2">{requiredPlan}</strong> : "un plan superior"}.
+          requiere {requiredPlan ? <strong className="text-primary">{requiredPlan}</strong> : "un plan superior"}.
         </div>
         <Link
           href={upgradeHref}
-          className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-full btn-gold text-sm font-medium"
+          className="mt-6 btn btn-primary inline-flex items-center gap-2"
         >
-          <Sparkles size={16} />
+          <Sparkles size={15} />
           Mejorar plan
         </Link>
       </div>

@@ -7,7 +7,12 @@ import { Logo } from "@/components/Logo";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminLoginPage() {
+export const metadata = {
+  title: "Iniciar sesión — LUMIA",
+  description: "Accede al portal de tu barbería en LUMIA.",
+};
+
+export default async function LoginPage() {
   const store = await cookies();
   if (store.get(AUTH_COOKIE)?.value) {
     redirect("/admin");
@@ -22,10 +27,10 @@ export default async function AdminLoginPage() {
           </Link>
 
           <div className="mb-8 text-center">
-            <div className="text-[10px] uppercase tracking-imperial text-accent-3 mb-3">Portal Admin</div>
+            <div className="text-[10px] tracking-imperial text-accent-3 mb-3">Iniciar sesión</div>
             <h1 className="font-display italic text-3xl text-ink">Bienvenido de vuelta</h1>
             <p className="text-ink-2 text-sm mt-2 leading-relaxed">
-              Ingresa con la cuenta del administrador de la barbería.
+              Accede al portal de tu barbería.
             </p>
           </div>
 

@@ -1,7 +1,7 @@
-import { Calendar, TrendingUp, DollarSign, Users, UserMinus, Sparkles } from "lucide-react";
+import { Calendar, TrendingUp, DollarSign, Users, UserMinus, Sparkles, ArrowRight } from "lucide-react";
 import { StatCard } from "@/components/ui/StatCard";
 import { getDashboard } from "@/lib/admin-api";
-import { Card, CardSubtitle, CardTitle } from "@/components/ui/Card";
+import { Card, CardSubtitle, CardTitle, CardEyebrow } from "@/components/ui/Card";
 import { fmtCents } from "@/lib/utils";
 import Link from "next/link";
 
@@ -18,9 +18,11 @@ export default async function AdminDashboardPage() {
 
   if (error || !data) {
     return (
-      <div className="card-premium p-10 text-center">
-        <div className="text-danger font-medium mb-2">No se pudo conectar con el API.</div>
-        <div className="text-sm text-text-2">Asegúrate de que <code className="font-mono text-accent">php artisan serve</code> esté corriendo en :8000.</div>
+      <div className="card-paper p-10 text-center">
+        <div className="text-danger font-display italic text-2xl mb-2">No se pudo conectar con el API.</div>
+        <div className="text-sm text-ink-2">
+          Asegúrate de que <code className="font-mono text-primary">php artisan serve</code> esté corriendo en :8000.
+        </div>
       </div>
     );
   }
@@ -28,12 +30,12 @@ export default async function AdminDashboardPage() {
   const k = data.kpis;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-12">
       <header>
-        <div className="text-xs uppercase tracking-[0.3em] text-accent mb-2">Buen día</div>
-        <h1 className="font-display text-4xl">{data.tenant.name}</h1>
-        <p className="text-text-2 text-sm mt-1">
-          Plan actual: <span className="text-accent-2 font-medium uppercase">{data.tenant.plan}</span> · {data.features.length} funciones activas
+        <div className="text-[10px] tracking-imperial text-accent-3 mb-3">Buen día</div>
+        <h1 className="font-display italic text-5xl text-ink leading-tight">{data.tenant.name}</h1>
+        <p className="text-ink-2 text-sm mt-3">
+          Plan actual: <span className="font-display italic text-primary">{data.tenant.plan}</span> · {data.features.length} funciones activas
         </p>
       </header>
 
@@ -46,28 +48,29 @@ export default async function AdminDashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
-          <CardTitle>Próximas citas</CardTitle>
+          <CardEyebrow>Próximas citas</CardEyebrow>
+          <CardTitle>Tu agenda</CardTitle>
           <CardSubtitle>Vista rápida. Para gestión completa entra a Agenda.</CardSubtitle>
-          <div className="mt-6">
-            <Link href="/admin/agenda" className="btn-gold inline-flex px-5 py-2.5 rounded-full text-sm font-medium">
-              Ir a Agenda →
-            </Link>
-          </div>
+          <Link href="/admin/agenda" className="btn btn-primary mt-7 inline-flex items-center gap-2">
+            Ir a Agenda <ArrowRight size={14} />
+          </Link>
         </Card>
 
-        <Card className="bg-gradient-to-br from-bordeaux/20 to-bg-base">
-          <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-accent/15 text-accent"><UserMinus size={18} /></div>
+        <Card className="bg-gradient-to-br from-bg-vellum to-bg-paper">
+          <div className="flex items-start gap-3 mb-4">
+            <div className="p-2 rounded-[10px] bg-primary/10 text-primary border border-primary/20">
+              <UserMinus size={18} />
+            </div>
             <div>
-              <CardTitle>Retención</CardTitle>
+              <CardEyebrow className="mb-1">Retención</CardEyebrow>
               <CardSubtitle>Clientes inactivos +30 días</CardSubtitle>
             </div>
           </div>
-          <div className="mt-4 font-display text-5xl tabular-nums text-accent-2">{k.inactive_clients_30d}</div>
-          <p className="text-sm text-text-2 mt-2 mb-4">
-            Reactiva con un WhatsApp + cupón único.
+          <div className="font-display italic text-6xl tabular-nums text-primary leading-none">{k.inactive_clients_30d}</div>
+          <p className="text-sm text-ink-2 mt-3 mb-5 leading-relaxed">
+            Reactiva con un WhatsApp + cupón único en un clic.
           </p>
-          <Link href="/admin/marketing" className="btn-ghost inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs">
+          <Link href="/admin/marketing" className="btn btn-ghost text-sm inline-flex items-center gap-2">
             <Sparkles size={14} /> Abrir Marketing
           </Link>
         </Card>
