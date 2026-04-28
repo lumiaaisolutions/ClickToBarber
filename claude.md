@@ -1,12 +1,16 @@
-# Proyecto: BarberPro SaaS — Plataforma Integral de Gestión para Barberías
+# Proyecto: LUMIA — Software de barbería con identidad propia
 
 > Documento maestro de contexto para Claude Code. Este archivo se carga automáticamente en cada sesión y define la visión, el stack, las reglas de negocio, el sistema visual y el log operativo del proyecto.
+>
+> **Renombrado 2026-04-28**: el producto pasó de "BarberPro" a **LUMIA** (más memorable, más old-money, alineado con la marca paraguas LUMIA AI Solutions).
 
 ---
 
 ## 1. Visión General
 
-**BarberPro** es una plataforma SaaS multi-tenant que digitaliza la operación integral de barberías premium: agenda inteligente, gestión de personal, punto de venta, inventario, marketing de retención y finanzas. El producto opera bajo un modelo **Freemium / Suscripción escalonada**, donde **todas** las funcionalidades son visibles en la interfaz, pero las premium aparecen bloqueadas con un icono de candado para usuarios sin la suscripción correspondiente (estrategia de "deseo visible" para maximizar la conversión).
+**LUMIA** es una plataforma SaaS multi-tenant que digitaliza la operación integral de barberías premium: agenda inteligente, gestión de personal, punto de venta, inventario, marketing de retención y finanzas. El producto opera bajo un modelo **Freemium / Suscripción escalonada**, donde **todas** las funcionalidades son visibles en la interfaz, pero las premium aparecen bloqueadas con un icono de candado para usuarios sin la suscripción correspondiente (estrategia de "deseo visible" para maximizar la conversión).
+
+**White-label nativo**: cada barbería tiene su propia identidad visual (paleta, fuentes, logo) que aplica sólo a `/admin/*` y al link público `/b/{slug}`. La landing pública, el login y el checkout conservan la identidad LUMIA (verde botella + oro mate + marfil).
 
 ### 1.1 Portales
 
@@ -180,62 +184,104 @@ El usuario ve lo que se está perdiendo → fricción de deseo → conversión.
 
 ## 6. Sistema Visual (Design System)
 
-### 6.1 Paleta de Colores — Dark Premium
+> **Nota (2026-04-28):** la identidad visual fue refundida de "Dark Premium" a
+> "Old Money Light". El antiguo dark queda preservado como preset opcional
+> `carbon-premium` para tenants que lo elijan.
 
-Inspirada en barberías de lujo: cuero, latón, navaja pulida, luz baja.
+### 6.1 Paleta LUMIA Old Money — base inmutable
+
+Inspirada en clubs privados de Mayfair, papel manila y latón envejecido.
+Estos tokens viven en `:root` de `frontend/src/app/globals.css` y **nunca**
+se sobrescriben globalmente. Por tenant se sobrescriben sólo las variables
+`--tenant-*` y `--primary` / `--accent` vía `<BrandingProvider>` scoped.
 
 ```css
 :root {
-  /* Base — Carbón profundo */
-  --bg-void:       #07080A;  /* Fondo absoluto */
-  --bg-base:       #0E1014;  /* Cards primarias */
-  --bg-elevated:   #161A21;  /* Cards elevadas / modales */
-  --bg-overlay:    #1F242D;  /* Hover, divisores suaves */
+  /* Base — Marfil & papel manila */
+  --bg-canvas:   #FBF7EE;  /* Fondo absoluto */
+  --bg-paper:    #F5EFE0;  /* Cards primarias */
+  --bg-vellum:   #EDE5D2;  /* Cards elevadas / modales */
+  --bg-sage:     #E4DCC6;  /* Hover / divisores cálidos */
 
-  /* Acento principal — Latón / Oro envejecido */
-  --accent-primary:   #C9A961;  /* CTA, números clave */
-  --accent-primary-2: #E0BE74;  /* Hover */
-  --accent-primary-3: #8E7338;  /* Active / sombras */
+  /* Tinta */
+  --ink:         #1A1F1B;  /* Tinta verdosa principal */
+  --ink-2:       #4A4F45;
+  --ink-muted:   #8A8B7E;
+  --ink-on-accent: #FBF7EE;
 
-  /* Acento secundario — Bordeaux profundo (sangre de barbero) */
-  --accent-secondary: #6B1F2A;
-  --accent-secondary-2: #8C2A38;
+  /* Primario — Verde botella */
+  --primary:     #1F3D2B;
+  --primary-2:   #2D5240;
+  --primary-3:   #14281C;
 
-  /* Texto */
-  --text-primary:   #F4EFE3;  /* Marfil cálido */
-  --text-secondary: #A8A39A;  /* Gris perla */
-  --text-muted:     #5C5A55;  /* Disabled / placeholders */
-  --text-on-accent: #0E1014;  /* Texto sobre dorado */
+  /* Acento — Oro mate envejecido */
+  --accent:      #B8935E;
+  --accent-2:    #C9A878;
+  --accent-3:    #8E6D40;
 
-  /* Estados semánticos */
-  --success: #4F8A6B;
-  --warning: #D4954A;
-  --danger:  #B8453E;
-  --info:    #5B7A99;
+  /* Secundario — Navy clásico */
+  --navy:        #1A2F4F;
 
-  /* Bordes y líneas */
-  --border-subtle: rgba(244, 239, 227, 0.06);
-  --border-medium: rgba(244, 239, 227, 0.12);
-  --border-strong: rgba(201, 169, 97, 0.40);
+  /* Estados */
+  --success: #3F6B4F;  --warning: #B8853A;
+  --danger:  #9C4039;  --info:    #3F5A7A;
 
-  /* Glow / Lock overlay */
-  --lock-overlay: rgba(7, 8, 10, 0.78);
-  --lock-glow:    rgba(201, 169, 97, 0.18);
+  /* Hairlines */
+  --line-fine:   rgba(26, 31, 27, 0.08);
+  --line-medium: rgba(26, 31, 27, 0.16);
+  --line-strong: rgba(31, 61, 43, 0.32);
+
+  /* Variables de tenant (sobrescritas por BrandingProvider) */
+  --tenant-primary: var(--primary);
+  --tenant-accent:  var(--accent);
+  --tenant-radius:  14px;
+  --tenant-density: 1;
 }
 ```
 
-### 6.2 Tipografía
+### 6.2 Presets de identidad por tenant
 
-- **Display / Hero**: `"Fraunces"` (serif moderna con cortes premium) — pesos 400 / 600 / 800.
-- **UI / Body**: `"Inter"` (sans variable) — pesos 400 / 500 / 600.
+Cuatro paletas curadas (ver `docs/PRESETS.md`):
+
+1. **`old-money-emerald`** — Verde botella + oro mate (default LUMIA).
+2. **`ivory-brass`** — Marfil cálido + latón pulido (modo sépia).
+3. **`navy-classic`** — Navy medianoche + plata vieja.
+4. **`carbon-premium`** — Carbón profundo + latón (modo dark, legado).
+
+El admin elige y ajusta desde el wizard de onboarding o `/admin/identity`.
+Los detalles técnicos del white-labeling están en
+`.claude-skills/branding-tokens.md`.
+
+### 6.3 Tipografía
+
+- **Display / Hero**: `"Cormorant Garamond"` italic — pesos 400 / 500 / 600 / 700.
+- **UI / Body**: `"Inter Tight"` — pesos 400 / 500 / 600 / 700.
 - **Numérico tabular**: `"JetBrains Mono"` para finanzas y agenda.
 
-### 6.3 Principios de Movimiento
+Tracking signature: `.tracking-imperial` (0.22em uppercase) y
+`.tracking-noble` (0.08em) — usar en eyebrows, labels y links de navegación.
 
-- **Easing por defecto**: `cubic-bezier(0.22, 1, 0.36, 1)` (out-quint) — sensación premium.
-- **Duración**: micro (120ms), corta (240ms), media (420ms), narrativa (680ms+).
-- **Stagger**: 40-60ms entre elementos hermanos.
-- **Todo lo no-CSS pasa por `requestAnimationFrame`** — prohibido `setInterval`/`setTimeout` para animación.
+### 6.4 Principios de Movimiento
+
+- **Easing por defecto**: `cubic-bezier(0.16, 1, 0.3, 1)` (out-expo) — más
+  sutil que el antiguo out-quint. Premium sin dramatismo.
+- **Duración**: micro (120ms), corta (240ms), media (420ms), narrativa
+  (680ms+). Para reveals y transiciones de página: 780-1100ms.
+- **Stagger**: 40-80ms entre elementos hermanos.
+- **Hover signature** (firma de marca): `letter-spacing` aumenta de 0.04em a
+  0.08em en links y botones. Implementado como `.hover-spread`.
+- **Reveals**: `clip-path` en lugar de `translateY` cuando se trate de
+  marquesinas tipográficas (más elegante).
+- **Todo lo no-CSS pasa por `requestAnimationFrame`** — prohibido
+  `setInterval`/`setTimeout` para animación.
+
+### 6.5 Logo
+
+`<Logo />` y `<LogoMark />` viven en `frontend/src/components/Logo.tsx`.
+Wordmark "lumia" en italic Cormorant con la "i" cuyo punto natural se
+reemplaza por una tijera estilizada (mangos circulares + hojas cruzadas).
+Usa `currentColor` — pintar con `text-primary` en cualquier contexto.
+Anima el grupo `.scissor` con un giro sutil al hover (apertura de tijera).
 
 ---
 
@@ -332,6 +378,30 @@ Inspirada en barberías de lujo: cuero, latón, navaja pulida, luz baja.
 
 ### Entradas
 
+### [2026-04-28] Refundición visual a Old Money — paleta, logo, fuentes
+- **Contexto**: Tarea 3, refundición completa de la identidad visual y rebranding a LUMIA. La paleta antigua (carbón + latón + bordeaux) se conservó como preset opcional `carbon-premium`.
+- **Error**: N/A (no fue un bug, fue refactor mayor controlado).
+- **Causa raíz**: Decisión de producto: cambiar a old-money light + white-label por tenant, alineado con la marca paraguas LUMIA AI Solutions.
+- **Solución**:
+  - `globals.css` reescrito con tokens `--bg-canvas/paper/vellum/sage`, `--ink/-2/-muted`, `--primary/-2/-3`, `--accent/-2/-3`, `--line-fine/medium/strong`. Modos `light/sepia/dark` vía atributo `data-mode`.
+  - Fuentes nuevas: Cormorant Garamond (display italic) + Inter Tight (UI) + JetBrains Mono (numérico). Cargadas vía `next/font/google`.
+  - Logo nuevo: wordmark "lumia" italic con tijera SVG estilizada como punto de la "i". `LogoMark` (sólo tijera) para favicons/sidebar colapsado.
+  - Easing default cambió a `cubic-bezier(0.16, 1, 0.3, 1)` (out-expo). Nueva utilidad `.hover-spread` (letter-spacing 0.04→0.08em al hover).
+  - Sección "Presets" añadida a la landing con las 4 paletas.
+- **Prevención**: cualquier color hardcoded fuera de `globals.css` debe pasar code-review. Nuevos componentes deben usar tokens (`text-primary`, `bg-bg-paper`, etc.) o vars (`var(--tenant-primary)`). El branding por tenant **nunca** debe sobrescribir `:root` global — siempre scoped al subtree del `<BrandingProvider>`.
+
+### [2026-04-28] tenant_branding + roles ampliados + wizard onboarding
+- **Contexto**: Tarea 3 — feature mayor para soportar white-label dinámico y matriz de roles (admin/manager/receptionist/barber).
+- **Solución**:
+  - Migración `tenant_branding` (1-1 con tenants). Modelo `App\Domain\Tenancy\Models\TenantBranding`.
+  - Migración `users.first_login_at` para forzar wizard la primera vez.
+  - Middleware `EnsureRole` (alias `role:`) — registrado en `bootstrap/app.php`. `platform_owner` bypassa.
+  - Constants nuevos en `User`: `ROLE_MANAGER`, `ROLE_RECEPTIONIST`, helpers `canWrite()` / `canSeeFinance()`.
+  - `BrandingController`: GET/PUT `/admin/branding`, GET público `/tenant/{slug}/branding`, POST `/admin/onboarding/complete`.
+  - Frontend: `<BrandingProvider>` que inyecta CSS variables scoped al subtree (cero contaminación entre sesiones paralelas). `OnboardingWizard` 4-pasos. `BrandingEditor` para cambios posteriores.
+  - Seeder `OnboardingDemoSeeder`: tenant `marfil-avenue` con admin sin first_login_at para demostrar el wizard.
+- **Prevención**: documentar en `.claude-skills/branding-tokens.md` por qué CSS scoping en lugar de :root override (evita race condition entre tenants en SSR/edge cache).
+
 ### [2026-04-26] SQLite — pivot `barber_service.tenant_id` violaba NOT NULL en seeder
 - **Contexto**: Primer `migrate:fresh --seed`. El seeder `DemoTenantSeeder` asocia servicios a barberos con `$barber->services()->sync($ids)`.
 - **Error**: `SQLSTATE[23000] NOT NULL constraint failed: barber_service.tenant_id`.
@@ -352,33 +422,66 @@ Inspirada en barberías de lujo: cuero, latón, navaja pulida, luz baja.
 
 > Resumen ejecutivo que se actualiza al cierre de cada tarea para que la siguiente sesión arranque con cero ramp-up.
 
-### Estado actual (al cierre de Tarea 2 — 2026-04-26)
+### Estado actual (al cierre de Tarea 3 — 2026-04-28)
 
-- **Completado**:
-  - **Backend Laravel 11 + Sanctum** con DDD/Screaming Architecture: 14 bounded contexts (`Tenancy`, `Identity`, `Subscriptions`, `Billing`, `Staff`, `Catalog`, `Scheduling`, `Appointments`, `Payments`, `PointOfSale`, `Inventory`, `Notifications`, `Marketing`, `Finance`).
-  - **8 migraciones** creadas y verificadas (en SQLite por defecto, portables a PostgreSQL).
-  - **Modelos Eloquent** con `BelongsToTenant` trait + `TenantScope` global.
-  - **Repositorios + Servicios**: `BookAppointment`, `ConfirmAppointment`, `CancelAppointment`, `SendWhatsapp`, `RetentionScan`, `AvailabilityCalculator`.
-  - **Circuit Breaker Redis** con scripts Lua atómicos para acquire/success/failure (config en `config/circuit-breaker.php`).
-  - **Middlewares**: `ResolveTenant`, `EnsureFeatureEnabled` (402 con upgrade payload), `RateLimitByIp` (100 req/min Redis).
-  - **API REST** completa: `/api/billing/plans`, `/api/client/*` (público), `/api/admin/*` (con feature gates).
-  - **Seeders demo**: tenant "Barbería El Navajazo" con plan Pro, 3 barberos con horarios, 8 servicios, 12 productos, 50 clientes (16 inactivos +30d), 30 citas variadas.
-  - **Frontend Next.js 16 + React 19 + Tailwind 4**: paleta dark premium (carbón + latón + bordeaux), Fraunces+Inter+JetBrains Mono, Preloader con logo breathing, fondo Three.js reactivo al ratón con líneas tipo constelación, smooth scroll Lenis, scrollytelling horizontal con GSAP+ScrollTrigger (anti no-show storytelling), transiciones Framer Motion, FeatureGate con candado/blur/CTA upgrade.
-  - **Portal Cliente**: landing marketing, vista pública `/b/[slug]`, BookingFlow de 5 pasos (servicio → barbero → fecha → hora → datos → confirmación) con disponibilidad real desde el API.
-  - **Portal Admin** completo: Dashboard (KPIs reales), Agenda (citas reales agrupadas por día), Staff (con horarios semanales), Servicios, POS+Inventario, Marketing (selector de clientes inactivos + composer WhatsApp), Finanzas (con FeatureGate Enterprise activo), Billing (cambio de plan).
-  - **Docker Compose**: PostgreSQL 16 + Redis 7 + Mailpit + Redis Commander listos para `make up`.
-  - **Makefile** + `README.md` actualizados.
-- **Stack en ejecución verificado**: Laravel API en `:8000` y Next.js dev server (Turbopack) en `:3000`. Las 10 rutas frontend devuelven 200. Endpoints API responden con datos reales.
-- **Siguiente paso lógico (Tarea 3)**: Sustituir SQLite por PostgreSQL con Row Level Security real (políticas RLS por tabla tenant-scoped). Implementar Sanctum login real para `/admin/*` (actualmente identifica tenant por header `X-Tenant`). Añadir tests Pest para los servicios de dominio.
-- **Pendientes manuales** (no podía resolverlos sin acción del usuario):
-  - Ejecutar `git init && git add -A && git commit ...` (comandos abajo en §13).
-  - Levantar `docker compose up -d` si quieres usar PostgreSQL/Redis en lugar de SQLite/cache file.
-  - Configurar credenciales reales de WhatsApp Cloud API, Stripe, MercadoPago y Twilio (todos están en `LogDriver`/`MockGateway` por defecto en local).
-- **Riesgos a vigilar**:
-  - Migraciones nuevas con tablas tenant-scoped deben recordar `tenant_id` indexado y, en PostgreSQL, política RLS.
-  - El driver de WhatsApp por defecto es `LogWhatsappClient` → todos los envíos quedan en `storage/logs/laravel.log` con prefijo `[WhatsApp/MOCK]`.
-  - El Circuit Breaker degrada a "siempre abierto" si Redis no responde (log warning) — verificar Redis al pasar a producción.
-  - `Model::preventLazyLoading(true)` está activo fuera de producción → cualquier lazy load lanza excepción en dev/test.
+#### Refundición visual y rebranding a LUMIA
+
+- **Identidad LUMIA Old Money** aplicada como base inmutable: paleta marfil + verde botella + oro mate + navy. Modos `light` (default), `sepia` y `dark` vía atributo `data-mode`. Tipografía Cormorant Garamond italic + Inter Tight + JetBrains Mono.
+- **Logo nuevo**: wordmark "lumia" italic con tijera SVG como punto de la "i". `<Logo>` y `<LogoMark>` en `frontend/src/components/Logo.tsx`. Color heredado de `currentColor` para fácil customización.
+- **Landing pública (`/`, `/precios`, `/login`)** completamente reescrita con la nueva identidad: hero, sección Presets (4 cards visuales con previews), Features, Anti-No-Show vertical timeline, Pricing con módulos por rol, Footer.
+- **`/b/{slug}` y `/admin/*`** envueltos en `<BrandingProvider>` que inyecta CSS variables scoped al subtree (cero contaminación entre sesiones paralelas). El link público lleva siempre footer "Powered by LUMIA" → https://lumiaaisolutions.com.
+- **Animaciones old-money**: easing `cubic-bezier(0.16, 1, 0.3, 1)` (out-expo), `.hover-spread` (letter-spacing 0.04→0.08em), `.reveal-clip` con `clip-path`, motion staggered con delays 40-80ms.
+
+#### Backend
+
+- **Tabla `tenant_branding`** (1-1 con tenants) — preset, primary/accent_color, font_display/body, radius, density, mode, logo_url, public_tagline, admin_display_name.
+- **Columna `users.first_login_at`** — NULL fuerza wizard de onboarding.
+- **Roles ampliados**: `platform_owner`, `admin`, `manager`, `receptionist`, `barber`, `client` (sólo los 5 primeros entran al portal). `User::canWrite()` y `User::canSeeFinance()` para checks programáticos.
+- **Middleware `EnsureRole`** (`role:admin,manager`). `platform_owner` bypassa siempre. Registrado en `bootstrap/app.php`.
+- **`BrandingController`**: `GET/PUT /admin/branding`, `POST /admin/onboarding/complete`, `GET /tenant/{slug}/branding` (público).
+- **CRUD endpoints**: Staff (`POST/PUT/DELETE /admin/staff/{id}` + `GET/PUT /admin/staff/me/schedule` para barberos), Services (`POST/PUT/DELETE /admin/catalog/services/{id}`), Products (`POST/PUT/DELETE /admin/catalog/products/{id}` con feature gate `pos_inventory`).
+
+#### Frontend
+
+- **`<BrandingProvider>`** + hook `useBranding()` en `frontend/src/components/branding/`.
+- **`OnboardingWizard`** (4 pasos: Negocio → Preset → Detalles → Logo) con preview en vivo. Se monta en `/admin/onboarding` cuando `first_login_at = null`.
+- **`BrandingEditor`** en `/admin/identity` — editor permanente del branding con preview live.
+- **`StaffClient`** y **`ServicesClient`** — Client Components con CRUD condicional al rol. Vista barbero "mis horarios" inline cuando `role === 'barber'`.
+- **Route handlers proxy** en `frontend/src/app/api/admin/{branding,onboarding/complete,staff,staff/[id],staff/me/schedule,services,services/[id]}` que forwardean el Bearer Sanctum desde la cookie httpOnly.
+
+#### Demo accounts
+
+```
+admin@elnavajazo.test      / password   → admin (CRUD completo, onboarding hecho)
+gerencia@elnavajazo.test   / password   → manager
+recepcion@elnavajazo.test  / password   → receptionist
+diego@elnavajazo.test      / password   → barber (sólo "mis horarios")
+admin@marfil.test          / password   → admin SIN onboarding (wizard demo)
+```
+
+- **Stack en ejecución verificado**: Laravel API en `:8000` y Next.js dev server en `:3000`. `migrate:fresh --seed` corre limpio. Endpoint público `/api/tenant/el-navajazo/branding` devuelve JSON correcto.
+
+#### Siguiente paso lógico (Tarea 4)
+
+1. **Pago + provisión**: integrar Stripe Checkout en `/precios`, webhook que crea tenant + usuario admin + envía credenciales por email.
+2. **CRUD restantes**: Productos (POS) UI, Citas desde admin (agendar manual), Cupones del marketing.
+3. **Permisos finos en UI** del resto de pages (Marketing, Finance, Agenda) para esconder acciones según `can_write` / `can_see_finance`.
+4. **Tests Pest**: smoke por endpoint CRUD + tests de roles (cada rol contra cada endpoint).
+5. **Migrar a PostgreSQL** real con RLS activado (las migraciones ya están listas).
+
+#### Pendientes manuales (necesitan acción del usuario)
+
+- Configurar credenciales reales de WhatsApp Cloud API, Stripe, MercadoPago y Twilio (todos en `LogDriver`/`MockGateway` por defecto).
+- Levantar `docker compose up -d` si quieres usar PostgreSQL/Redis.
+- Subir un logo SVG/PNG real para el tenant demo `el-navajazo` (actualmente sólo wordmark LUMIA).
+
+#### Riesgos a vigilar
+
+- Cualquier color hardcoded fuera de `globals.css` rompe el sistema de presets — pasarlo a token o `var(--tenant-*)`.
+- `BrandingProvider` debe envolver SIEMPRE el subtree de `/admin/*` y `/b/{slug}`. Nunca se aplica al landing público.
+- Si añades migración con tabla nueva tenant-scoped, recuerda el trait `BelongsToTenant` y, en PostgreSQL, política RLS.
+- `Model::preventLazyLoading(true)` está activo fuera de producción → cualquier lazy load lanza excepción.
+- El driver de WhatsApp por defecto es `LogWhatsappClient` → envíos en `storage/logs/laravel.log`.
 
 ---
 
