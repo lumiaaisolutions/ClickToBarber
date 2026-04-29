@@ -416,13 +416,62 @@ Anima el grupo `.scissor` con un giro sutil al hover (apertura de tijera).
 - **Solución**: Forzar `->toString()` en el controlador.
 - **Prevención**: En todos los `FormRequest`/controladores donde se pase un valor al dominio, usar `->toString()` explícito o cast `(string)`. Un test feature por endpoint catchea esto.
 
+### [2026-04-29] Error 419 al crear cita desde `/b/{slug}` (Sanctum statefulApi vs Bearer)
+- **Contexto**: BookingFlow del cliente público enviaba `POST /api/client/appointments` y recibía `419 Page Expired` justo antes del paso "Confirmar reserva".
+- **Error**: respuesta 419 (Laravel TokenMismatchException) — el endpoint público estaba siendo tratado como ruta web protegida por CSRF.
+- **Causa raíz**: `bootstrap/app.php` tenía `$middleware->statefulApi()`, que añade `EnsureFrontendRequestsAreStateful` a TODAS las rutas `/api/*`. Sanctum considera `localhost`, `127.0.0.1`, `::1` y dominios listados en `sanctum.stateful` como "stateful" y para esas requests aplica el stack web (sesión + VerifyCsrfToken). Como la SPA habla con el backend vía Bearer tokens (no cookies SPA), el modo stateful no aporta nada y rompe los endpoints públicos sin token CSRF.
+- **Solución**: removido `statefulApi()` del kernel. La autenticación queda 100% Bearer (Sanctum personal access tokens reenviados desde cookie httpOnly por route handlers de Next.js).
+- **Prevención**: cuando la SPA hable con el backend por Bearer (no cookie SPA), **nunca** invocar `statefulApi()`. Documentado in-place con comentario explícito en `bootstrap/app.php`. Test mínimo: `curl -X POST /api/client/appointments` sin headers → debe responder 422 (validación) o 201 (creado), nunca 419.
+
+### [2026-04-29] Loop "history.replaceState() more than 100 times per 10 seconds" en `/login`
+- **Contexto**: tras expirar un token Sanctum (cookie `bp_token` aún en el navegador), abrir `/login` o `/admin` colgaba el navegador con `Runtime SecurityError`.
+- **Error**: el browser DevTools mostraba `Attempt to use history.replaceState() more than 100 times per 10 seconds` con stack en `replaceState [native code]`. El navegador aborta automáticamente el loop por seguridad.
+- **Causa raíz**: el ciclo de redirects era:
+    1. `/admin/layout.tsx` veía cookie + `/auth/me` devolvía 401 → `redirect("/login")`
+    2. `/login/page.tsx` veía la misma cookie (no la había borrado nadie) → `redirect("/admin")`
+    3. → vuelta al paso 1, infinito.
+  Adicionalmente, `LoginForm` construía URLs `/admin/${slug}/onboarding` que no existen como rutas (el árbol no usa `[slug]`), generando 404 en client-side navigation.
+- **Solución**:
+  - `/api/auth/logout/route.ts` ahora también acepta `GET`: borra `AUTH_COOKIE` y `TENANT_COOKIE` y redirige (303) a `/login`.
+  - `/admin/layout.tsx` en estado `unauthorized` redirige a `/api/auth/logout` (que limpia y luego va a `/login`), en lugar de directo a `/login` con la cookie sucia.
+  - `/login/page.tsx` y `/admin/login/page.tsx` validan la sesión con `/auth/me` ANTES de redirigir a `/admin` — si la cookie es inválida, muestran el form en lugar de seguir empujando al admin.
+  - `LoginForm` redirige a `/admin/onboarding` o `/admin` (sin slug en URL).
+- **Prevención**: regla — un Server Component **nunca** debe redirigir basado sólo en la presencia de la cookie. Siempre validar contra el backend. Si la cookie está y la sesión es inválida, pasar por un route handler que la borre antes de redirigir.
+
+### [2026-04-29] Background task daemon mataba `npm run dev` al cerrar el handle
+- **Contexto**: `npm run dev` arrancado vía `Bash(run_in_background=true)` se reportaba como `completed` con exit code 0 a los pocos segundos, pese a que el proceso seguía vivo brevemente. Volvía a aparecer otro proceso (huérfano, ver siguiente entrada) en :3000.
+- **Causa raíz**: el daemon que supervisa los background tasks de la herramienta cierra el shell padre cuando la tarea se "completa", lo que envía SIGTERM al hijo `next dev`. Para procesos largos como un dev server, esto los mata silenciosamente.
+- **Solución**: arrancar con `nohup npm run dev > /tmp/lumia-frontend.log 2>&1 & disown`. `nohup` ignora SIGHUP, `disown` lo desliga del job table del shell, y `&` lo manda al background sin atarlo al daemon de tareas.
+- **Prevención**: en futuras sesiones, dev servers largos (Next.js, Vite, Laravel `php artisan serve` extendido) se levantan con `nohup ... & disown`. Logs van a `/tmp/lumia-*.log`. La señal de éxito es `lsof -ti:PORT` mostrando el PID, no el output del daemon.
+
+### [2026-04-29] Otro proyecto (`opticatc-next`) ocupaba `:3000` como huérfano (PPID=1)
+- **Contexto**: tras matar el dev server de Barberia, `localhost:3000` seguía sirviendo HTML de OpticaTC. Al relanzar Barberia, Next.js lo movía a `:3001` con el aviso `Port 3000 is in use by process 42800, using available port 3001 instead`.
+- **Causa raíz**: el usuario tenía `next-server` de `/Users/fernandotorres/Desktop/LUMIA/opticatc-next/apps/web` corriendo huérfano (`ppid=1` → adoptado por launchd después de cerrar la terminal padre). NO había supervisor que lo respawneara — simplemente sobrevivía al cierre de su shell.
+- **Solución**: identificar todo el árbol con `ps -o pid,ppid,command -p $(lsof -ti:3000)`, subir hasta encontrar el `node`/`npm` original, y `kill -9` al árbol completo. Verificar con `lsof -ti:3000` que queda libre antes de lanzar Barberia.
+- **Prevención**: antes de arrancar dev servers, ejecutar `lsof -ti:3000 :8000` y matar cualquier proceso huérfano. Documentar en `README.md` que el puerto 3000 lo usa LUMIA y debe estar libre.
+
+### [2026-04-29] LandingPricing tenía bugs visuales y diseño tosco
+- **Contexto**: el panel de planes en `/precios` y la home tenía cards de altura desigual, badge "Más elegido" superpuesto al borde por usar `border-2 border-primary`, y una lista de 16 features con tachados+candados que se sentía pesada y negativa.
+- **Solución (refactor visual)**:
+  - Toggle Mensual / Anual (−20%) con estado en cliente.
+  - Cards uniformes con `border` sutil; el plan "Pro" se distingue con `ring-1` suave + shadow ambiental, no con border grueso.
+  - Badge contextual en esquina superior derecha (Pro → "Más elegido", Enterprise → "Para cadenas") sin tapar el header.
+  - Sólo se listan features INCLUIDOS (sin tachados, sin candados). Las features premium (POS, Marketing) usan `text-ink` pleno; el resto `text-ink-2` para guiar la vista.
+  - Precio gigante con `MXN / mes` en líneas pequeñas.
+- **Prevención**: para listas largas de features comparativas, mostrar sólo positivos por columna en lugar de columnas matriciales con tachados — la jerarquía visual se rompe rápido y comunica lo equivocado (lo que NO tiene). Si necesitas comparativa total, usar tabla aparte tipo "all features matrix".
+
 ---
 
 ## 11. Contexto Importante para Próxima Sesión
 
 > Resumen ejecutivo que se actualiza al cierre de cada tarea para que la siguiente sesión arranque con cero ramp-up.
 
-### Estado actual (al cierre de Tarea 3 — 2026-04-28)
+### Estado actual (al cierre de Tarea 3.1 — 2026-04-29)
+
+> Tarea 3 (refundición visual + branding + roles + CRUD) cerrada el 2026-04-28.
+> Tarea 3.1 (round de fixes post-feedback del usuario) cerrada el 2026-04-29 —
+> arregla 419 al reservar, loop replaceState en /login y rediseña el panel de
+> planes. Sin cambios funcionales nuevos: sólo bugfix + polish visual.
 
 #### Refundición visual y rebranding a LUMIA
 
@@ -459,26 +508,42 @@ diego@elnavajazo.test      / password   → barber (sólo "mis horarios")
 admin@marfil.test          / password   → admin SIN onboarding (wizard demo)
 ```
 
-- **Stack en ejecución verificado**: Laravel API en `:8000` y Next.js dev server en `:3000`. `migrate:fresh --seed` corre limpio. Endpoint público `/api/tenant/el-navajazo/branding` devuelve JSON correcto.
+#### Fixes incluidos en Tarea 3.1 (2026-04-29)
+
+- **419 al reservar cita** — removido `statefulApi()` del kernel (la SPA usa Bearer, no cookies SPA). Verificado: `POST /api/client/appointments` responde 201.
+- **Loop `replaceState` en `/login`** — `/api/auth/logout` ahora acepta `GET` y limpia cookie antes de redirigir; `/admin/layout` pasa por ahí en `unauthorized`; `/login` y `/admin/login` validan sesión real con `/auth/me` antes de redirigir; `LoginForm` ya no construye URLs `[slug]` inexistentes.
+- **Rediseño LandingPricing** — toggle Mensual/Anual (−20%), cards uniformes, badge contextual sin overlap, sólo features incluidos.
+- **Operacional** — `lumia-frontend.log` en `/tmp/`. Dev servers se arrancan con `nohup npm run dev > /tmp/lumia-frontend.log 2>&1 & disown` para sobrevivir al daemon de background tasks.
+
+#### Stack en ejecución verificado
+
+- Laravel API en `:8000` (Bearer auth, sin statefulApi).
+- Next.js dev server en `:3000` (Barberia, no OpticaTC). Si ves OpticaTC, mata su árbol con `kill -9 $(lsof -ti:3000)` y relanza.
+- `migrate:fresh --seed` corre limpio, incluye 5 demo accounts con roles distintos.
+- Endpoints verificados con 200/201: `/`, `/login`, `/precios`, `/b/el-navajazo`, `/api/tenant/el-navajazo/branding`, `POST /api/client/appointments`.
 
 #### Siguiente paso lógico (Tarea 4)
 
-1. **Pago + provisión**: integrar Stripe Checkout en `/precios`, webhook que crea tenant + usuario admin + envía credenciales por email.
-2. **CRUD restantes**: Productos (POS) UI, Citas desde admin (agendar manual), Cupones del marketing.
-3. **Permisos finos en UI** del resto de pages (Marketing, Finance, Agenda) para esconder acciones según `can_write` / `can_see_finance`.
-4. **Tests Pest**: smoke por endpoint CRUD + tests de roles (cada rol contra cada endpoint).
-5. **Migrar a PostgreSQL** real con RLS activado (las migraciones ya están listas).
+1. **Pago + provisión**: integrar Stripe Checkout en `/precios`, webhook que crea tenant + usuario admin + envía credenciales por email. Hoy el alta es manual ("nuestro equipo te contacta").
+2. **CRUD restantes en UI**: Productos (POS) — los endpoints existen, falta `ProductsClient.tsx` similar a `ServicesClient`. Citas desde admin (agendar manual). Cupones del marketing.
+3. **Permisos finos en UI** del resto de pages (Marketing, Finance, Agenda, POS) para esconder acciones según `can_write` / `can_see_finance` que ya devuelve `/auth/me`.
+4. **Tests Pest**: smoke por endpoint CRUD + tests de roles (cada rol contra cada endpoint protegido por `role:`).
+5. **Migrar a PostgreSQL** real con RLS activado (las migraciones ya están listas en `2026_04_27_000001_enable_rls_for_tenant_tables.php`).
+6. **Editor visual de horarios de barbería** (BusinessHours) — hoy se editan sólo desde el seeder.
 
 #### Pendientes manuales (necesitan acción del usuario)
 
-- Configurar credenciales reales de WhatsApp Cloud API, Stripe, MercadoPago y Twilio (todos en `LogDriver`/`MockGateway` por defecto).
-- Levantar `docker compose up -d` si quieres usar PostgreSQL/Redis.
-- Subir un logo SVG/PNG real para el tenant demo `el-navajazo` (actualmente sólo wordmark LUMIA).
+- Configurar credenciales reales de WhatsApp Cloud API, Stripe, MercadoPago y Twilio (todos en `LogDriver`/`MockGateway` por defecto en local).
+- Levantar `docker compose up -d` si quieres usar PostgreSQL/Redis en lugar de SQLite/cache file.
+- Subir un logo SVG/PNG real para el tenant demo `el-navajazo` (actualmente sólo aparece el wordmark LUMIA).
+- Si reinicias y `:3000` está ocupado por otro proyecto: `kill -9 $(lsof -ti:3000)` y relanza Barberia.
 
 #### Riesgos a vigilar
 
 - Cualquier color hardcoded fuera de `globals.css` rompe el sistema de presets — pasarlo a token o `var(--tenant-*)`.
-- `BrandingProvider` debe envolver SIEMPRE el subtree de `/admin/*` y `/b/{slug}`. Nunca se aplica al landing público.
+- `BrandingProvider` debe envolver SIEMPRE el subtree de `/admin/*` y `/b/{slug}`. Nunca se aplica a la landing pública (debería conservar identidad LUMIA fija).
+- **Nunca** invocar `$middleware->statefulApi()` en `bootstrap/app.php` mientras la SPA use Bearer tokens — rompe rutas públicas con 419 (ver §10 entrada del 2026-04-29).
+- Server Components nunca deben redirigir basado sólo en presencia de cookie — siempre validar con `/auth/me` o redirigir al route handler `/api/auth/logout` que la limpia (ver §10 loop replaceState).
 - Si añades migración con tabla nueva tenant-scoped, recuerda el trait `BelongsToTenant` y, en PostgreSQL, política RLS.
 - `Model::preventLazyLoading(true)` está activo fuera de producción → cualquier lazy load lanza excepción.
 - El driver de WhatsApp por defecto es `LogWhatsappClient` → envíos en `storage/logs/laravel.log`.
