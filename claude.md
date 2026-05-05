@@ -450,6 +450,13 @@ Anima el grupo `.scissor` con un giro sutil al hover (apertura de tijera).
 - **Solución**: identificar todo el árbol con `ps -o pid,ppid,command -p $(lsof -ti:3000)`, subir hasta encontrar el `node`/`npm` original, y `kill -9` al árbol completo. Verificar con `lsof -ti:3000` que queda libre antes de lanzar Barberia.
 - **Prevención**: antes de arrancar dev servers, ejecutar `lsof -ti:3000 :8000` y matar cualquier proceso huérfano. Documentar en `README.md` que el puerto 3000 lo usa LUMIA y debe estar libre.
 
+### [2026-05-05] Auditoría de production readiness — punch-list de bloqueantes
+- **Contexto**: sesión de planning post-Tarea 3.1 antes de empezar Tarea 4. El usuario pidió "qué falta para subirlo a producción".
+- **Error**: N/A (no fue un bug, fue auditoría).
+- **Causa raíz**: el producto está visualmente refundido y funcional en local con drivers mock, pero faltan piezas estructurales para SaaS multi-tenant cobrable: pagos reales, RLS activo, integraciones reales (WhatsApp/Twilio/Stripe), cifrado PII, hardening y observabilidad.
+- **Solución**: creado `docs/PRODUCTION_READINESS.md` como fuente de verdad. Contiene 6 bloqueantes (B1-B6) con archivos a tocar y criterios de aceptación, 6 importantes (I1-I6), quick wins, orden de ejecución sugerido, matriz de riesgos y comandos para retomar la sesión en otra máquina. `.claude/` añadido al `.gitignore` (config local de Claude Code, no se comparte entre equipos).
+- **Prevención**: cualquier decisión arquitectónica tomada para preparar producción se documenta primero en `PRODUCTION_READINESS.md` y luego se implementa. Un bloqueante no se cierra hasta que su criterio de aceptación esté verificado.
+
 ### [2026-04-29] LandingPricing tenía bugs visuales y diseño tosco
 - **Contexto**: el panel de planes en `/precios` y la home tenía cards de altura desigual, badge "Más elegido" superpuesto al borde por usar `border-2 border-primary`, y una lista de 16 features con tachados+candados que se sentía pesada y negativa.
 - **Solución (refactor visual)**:
@@ -466,12 +473,18 @@ Anima el grupo `.scissor` con un giro sutil al hover (apertura de tijera).
 
 > Resumen ejecutivo que se actualiza al cierre de cada tarea para que la siguiente sesión arranque con cero ramp-up.
 
-### Estado actual (al cierre de Tarea 3.1 — 2026-04-29)
+### Estado actual (al cierre de auditoría production-readiness — 2026-05-05)
 
 > Tarea 3 (refundición visual + branding + roles + CRUD) cerrada el 2026-04-28.
-> Tarea 3.1 (round de fixes post-feedback del usuario) cerrada el 2026-04-29 —
-> arregla 419 al reservar, loop replaceState en /login y rediseña el panel de
-> planes. Sin cambios funcionales nuevos: sólo bugfix + polish visual.
+> Tarea 3.1 (round de fixes post-feedback) cerrada el 2026-04-29.
+> Sesión 2026-05-05: auditoría de production readiness. Sin cambios de
+> código — sólo documentación (`docs/PRODUCTION_READINESS.md`) más entrada
+> en §10. La sesión existe para que cualquier máquina pueda retomar Tarea 4
+> con cero ramp-up.
+>
+> **Para retomar en otra computadora**: leer
+> `docs/PRODUCTION_READINESS.md` completo (incluye comandos de bootstrap)
+> y luego este §11. Tarea 4 está framed con 6 bloqueantes priorizados.
 
 #### Refundición visual y rebranding a LUMIA
 
@@ -522,14 +535,30 @@ admin@marfil.test          / password   → admin SIN onboarding (wizard demo)
 - `migrate:fresh --seed` corre limpio, incluye 5 demo accounts con roles distintos.
 - Endpoints verificados con 200/201: `/`, `/login`, `/precios`, `/b/el-navajazo`, `/api/tenant/el-navajazo/branding`, `POST /api/client/appointments`.
 
-#### Siguiente paso lógico (Tarea 4)
+#### Siguiente paso lógico (Tarea 4 — Production prep)
 
-1. **Pago + provisión**: integrar Stripe Checkout en `/precios`, webhook que crea tenant + usuario admin + envía credenciales por email. Hoy el alta es manual ("nuestro equipo te contacta").
-2. **CRUD restantes en UI**: Productos (POS) — los endpoints existen, falta `ProductsClient.tsx` similar a `ServicesClient`. Citas desde admin (agendar manual). Cupones del marketing.
-3. **Permisos finos en UI** del resto de pages (Marketing, Finance, Agenda, POS) para esconder acciones según `can_write` / `can_see_finance` que ya devuelve `/auth/me`.
-4. **Tests Pest**: smoke por endpoint CRUD + tests de roles (cada rol contra cada endpoint protegido por `role:`).
-5. **Migrar a PostgreSQL** real con RLS activado (las migraciones ya están listas en `2026_04_27_000001_enable_rls_for_tenant_tables.php`).
-6. **Editor visual de horarios de barbería** (BusinessHours) — hoy se editan sólo desde el seeder.
+> Toda la planificación detallada (archivos a tocar, criterios de
+> aceptación, matriz de riesgos) vive en `docs/PRODUCTION_READINESS.md`.
+> Este resumen es sólo el orden recomendado.
+
+**Bloqueantes (sin esto no se sube)** — orden sugerido:
+
+1. **B1 — Postgres + RLS activado**: cambiar `DB_CONNECTION=pgsql`, aplicar `2026_04_27_000001_enable_rls_for_tenant_tables.php`, reescribir seeders SQLite-specific, test obligatorio de aislamiento entre tenants.
+2. **Quick wins**: GitHub Actions CI (lint + tests + build), `.env.example` documentado, README operativo.
+3. **B6 — Secrets management**: gestor (Doppler/AWS SM/Vault) antes de generar Stripe live keys.
+4. **B2 — Stripe Checkout + provisión automática**: webhook crea tenant + admin + magic link por email. Reemplaza el "nuestro equipo te contacta" actual.
+5. **B3 — WhatsApp Cloud API real**: 4 plantillas aprobadas por Meta (confirmation, reminder 24h, reminder 2h con botones, cancellation). **Trámite de Meta tarda 2-7 días — arrancar en paralelo a B2.**
+6. **B4 — Cifrado PII**: cast `encrypted` en `clients.phone/email/notes` + columna `phone_hash` indexable. Hacerlo antes de tener datos reales.
+7. **B5 — Hardening**: HMAC en webhooks, throttle login/booking, cookies `Secure+HttpOnly`, CSP headers, rotación tokens Sanctum.
+
+**Importantes (no bloquean técnicamente, pero no se debería cobrar sin esto)**:
+
+- I1 Tests Pest (smoke CRUD + matriz de roles + anti no-show).
+- I2 CRUD UI faltante (ProductsClient, citas manuales, cupones, BusinessHours).
+- I3 Permisos finos en UI (esconder acciones según `can_write`/`can_see_finance`).
+- I4 Infra prod (K8s o Fly/Railway, Horizon, backups PITR Postgres, TLS, CDN).
+- I5 Observabilidad (Prometheus/Grafana + dashboards + alertas + tracing).
+- I6 Legal (TOS, Privacidad, cookies, DPAs Meta/Stripe/Twilio, GDPR endpoints).
 
 #### Pendientes manuales (necesitan acción del usuario)
 

@@ -6,6 +6,11 @@ Thumbs.db
 .idea/
 .vscode/
 
+# Claude Code local config (no compartir entre máquinas — cada equipo
+# regenera permissions/hooks). Si quieres pinear settings comunes, mete
+# `.claude/settings.json` (no .local) y desigorar sólo ese archivo.
+.claude/
+
 # Backend Laravel
 backend/vendor/
 backend/node_modules/
