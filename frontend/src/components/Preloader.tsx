@@ -8,15 +8,13 @@ import { Logo } from "./Logo";
  * Aparece sólo en la primera visita de la sesión.
  */
 export function Preloader() {
-  const [phase, setPhase] = useState<"hidden" | "visible" | "fading">(() => {
-    if (typeof window !== "undefined" && sessionStorage.getItem("lumia:preload-shown") === "1") {
-      return "hidden";
-    }
-    return "visible";
-  });
+  const [phase, setPhase] = useState<"hidden" | "visible" | "fading">("visible");
 
   useEffect(() => {
-    if (phase === "hidden") return;
+    if (sessionStorage.getItem("lumia:preload-shown") === "1") {
+      setPhase("hidden");
+      return;
+    }
     const fadeTimer = setTimeout(() => setPhase("fading"), 1100);
     const hideTimer = setTimeout(() => {
       setPhase("hidden");
@@ -26,7 +24,7 @@ export function Preloader() {
       clearTimeout(fadeTimer);
       clearTimeout(hideTimer);
     };
-  }, [phase]);
+  }, []);
 
   if (phase === "hidden") return null;
 

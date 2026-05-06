@@ -67,6 +67,7 @@ final class BrandingController extends Controller
             'cover_url'          => ['nullable', 'url', 'max:512'],
             'admin_display_name' => ['nullable', 'string', 'max:128'],
             'public_tagline'     => ['nullable', 'string', 'max:255'],
+            'extra'              => ['nullable', 'array'],
         ]);
 
         $branding = TenantBranding::query()
@@ -108,6 +109,7 @@ final class BrandingController extends Controller
                 'admin_display_name' => ['nullable', 'string', 'max:128'],
                 'public_tagline'     => ['nullable', 'string', 'max:255'],
                 'tenant_name'        => ['nullable', 'string', 'max:128'],
+                'extra'              => ['nullable', 'array'],
             ]);
 
             if (! empty($payload['tenant_name'])) {
@@ -182,6 +184,7 @@ final class BrandingController extends Controller
             'logo_url'      => $b->logo_url,
             'cover_url'     => $b->cover_url,
             'public_tagline' => $b->public_tagline,
+            'extra'         => $b->extra,
         ];
 
         if (! $public) {

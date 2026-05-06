@@ -241,16 +241,24 @@ se sobrescriben globalmente. Por tenant se sobrescriben sólo las variables
 
 ### 6.2 Presets de identidad por tenant
 
-Cuatro paletas curadas (ver `docs/PRESETS.md`):
+Seis paletas curadas (ver `docs/PRESETS.md`), cada una con variante light **y**
+dark sincronizadas. Refundidas el 2026-05-05 (port del sistema Lumina):
 
-1. **`old-money-emerald`** — Verde botella + oro mate (default LUMIA).
-2. **`ivory-brass`** — Marfil cálido + latón pulido (modo sépia).
-3. **`navy-classic`** — Navy medianoche + plata vieja.
-4. **`carbon-premium`** — Carbón profundo + latón (modo dark, legado).
+1. **`champagne`** — Cálido y discreto, premium clásico neutral.
+2. **`emerald`** — Verde botella + oro mate (**default LUMIA**, antes `old-money-emerald`).
+3. **`terracotta`** — Cálido y artesanal, latina/mediterránea.
+4. **`midnight`** — Sofisticado y nocturno, formal.
+5. **`rose`** — Refinado y boutique, salones unisex.
+6. **`forest`** — Sobrio y profundo, barbershops tradicionales.
 
-El admin elige y ajusta desde el wizard de onboarding o `/admin/identity`.
-Los detalles técnicos del white-labeling están en
-`.claude-skills/branding-tokens.md`.
+Cada preset trae 15 tokens cromáticos (bg/surface/elevated/ink/.../accent/states)
+en lugar de los 2 colores anteriores. El admin elige y ajusta desde el wizard
+de onboarding o `/admin/identity` (4 paneles: Identidad / Paleta / Tipografía
+/ Layout) con vista previa en vivo.
+
+- Detalle de presets → `docs/PRESETS.md`.
+- Arquitectura completa (data model, adapter, live-preview store, BrandingProvider) → `docs/IDENTITY_SYSTEM.md`.
+- Convenciones rápidas de white-label → `.claude-skills/branding-tokens.md`.
 
 ### 6.3 Tipografía
 
@@ -467,13 +475,100 @@ Anima el grupo `.scissor` con un giro sutil al hover (apertura de tijera).
   - Precio gigante con `MXN / mes` en líneas pequeñas.
 - **Prevención**: para listas largas de features comparativas, mostrar sólo positivos por columna en lugar de columnas matriciales con tachados — la jerarquía visual se rompe rápido y comunica lo equivocado (lo que NO tiene). Si necesitas comparativa total, usar tabla aparte tipo "all features matrix".
 
+### [2026-05-05] Hydration mismatch en `Preloader` por leer `sessionStorage` en initial state
+- **Contexto**: Tras montar `npm run dev` por primera vez en Windows, abrir `/login` mostraba un overlay de Next con error "External changing data without sending a snapshot of it along with the HTML" apuntando al inicio de `LoginPage:40`. La página igual entraba al login y funcionaba.
+- **Error**: hydration mismatch — el server enviaba el `Preloader` visible (full-screen `fixed inset-0`) y el cliente, al inicializar el state, devolvía `null` porque `sessionStorage["lumia:preload-shown"]` ya estaba seteado de una visita previa. React detectaba que el primer hijo del body no coincidía y disparaba el warning.
+- **Causa raíz**: el `useState(() => { ... sessionStorage.getItem(...) ... })` corría `typeof window !== "undefined"` lazy initializer en server (false → "visible") y en cliente (true → potencialmente "hidden"). El primer render del cliente debe ser idéntico al del server, sin excepciones.
+- **Solución**: el state inicial siempre arranca en `"visible"` (matchea el server). La lectura de `sessionStorage` se mueve a un `useEffect`. Si el flag está, hace `setPhase("hidden")` post-hidratación → re-render normal sin error. Returnees ven un flicker brevísimo, aceptable.
+- **Prevención**: regla — **nunca** leer `sessionStorage`/`localStorage`/`window.*` dentro de `useState(() => ...)` o durante el body del componente. Si se necesita, hacerlo en `useEffect`. Misma regla aplica a `useReducer` con initializer.
+
+### [2026-05-05] Refundición del sistema de identidad — port de Lumina/Restaurante
+- **Contexto**: el editor de identidad anterior (`/admin/identity` y `OnboardingWizard`) tenía 4 presets con sólo 2 colores (`primary` + `accent`), 4 fuentes hardcoded en un `<select>`, y no había vista previa en vivo en el resto de la página. El usuario pidió portar la calidad del sistema de Lumina (Restaurante) — paletas completas, catálogo amplio de fuentes con preview real, paneles separados, live preview en todo el subtree.
+- **Error**: N/A (refactor mayor controlado, no fue bug).
+- **Causa raíz**: decisión de UX — alinear la herramienta de personalización con la calidad visual del producto.
+- **Solución**:
+  - **Datos**: `lib/branding-presets.ts` nuevo con 6 presets (Champagne, Esmeralda, Terracota, Medianoche, Rosa té, Bosque), cada uno con paleta light **y** dark de 15 tokens (bg/surface/elevated/ink×3/border/divider/accent×3/states×4). Catálogo de 13 fuentes display + 11 body con sus URLs de Google Fonts.
+  - **Adapter**: `lib/branding-adapter.ts` con `flatToRich()` y `richToFlat()` — convierten entre el shape persistido (FLAT, columnas + JSON `extra`) y el modelo del UI (RICH, paleta completa). El campo `extra` evita migración de schema.
+  - **Live preview**: `store/branding-preview-store.ts` (Zustand). Mientras el editor está abierto, el draft se publica al store y `BrandingProvider` lo prioriza sobre el persistido. Al guardar/desmontar se limpia.
+  - **Provider reescrito**: `BrandingProvider.tsx` aplica 15 vars `--lumia-*` + radio + densidad + fuentes resueltas, todo scoped al wrapper. Inyecta dinámicamente `<link>` de Google Fonts del par tipográfico activo. Mantiene compat con tokens viejos (`--primary`, `--accent`, `--tenant-*`).
+  - **Editor reescrito**: `BrandingEditor.tsx` con 4 paneles independientes (Identity / Palette / Typography / Layout) + preview card sticky. Los paneles son reusables — el `OnboardingWizard.tsx` los monta uno por paso (5 pasos: identity → palette → typography → layout → summary).
+  - **Backend**: `BrandingController.php` ahora valida y serializa `extra` (array JSON). El modelo ya tenía el campo en `$fillable` con cast `'extra' => 'array'`.
+- **Prevención**: cualquier color o tamaño que viva dentro del subtree del tenant **debe** consumirse via `var(--lumia-*)` o token Tailwind — nunca hardcoded. Para añadir presets/fuentes: editar sólo `lib/branding-presets.ts` y documentar en `docs/PRESETS.md`. Detalle arquitectónico completo en `docs/IDENTITY_SYSTEM.md`.
+
 ---
 
 ## 11. Contexto Importante para Próxima Sesión
 
 > Resumen ejecutivo que se actualiza al cierre de cada tarea para que la siguiente sesión arranque con cero ramp-up.
 
-### Estado actual (al cierre de auditoría production-readiness — 2026-05-05)
+### Estado actual (al cierre del port de identidad Lumina → LUMIA — 2026-05-05 PM)
+
+> Sesión 2026-05-05 PM: refundición del sistema de identidad portando la
+> lógica de Lumina (Restaurante). Suma 3 archivos nuevos + 3 reescritos +
+> 1 cambio backend. Ver §10 entrada del 2026-05-05 "Refundición del sistema
+> de identidad" para detalle del refactor.
+
+#### Lo nuevo en branding/identidad
+
+- **6 presets** (Champagne, Esmeralda, Terracota, Medianoche, Rosa té,
+  Bosque) con paletas light + dark sincronizadas. El default sigue siendo
+  Esmeralda (verde botella + oro mate).
+- **Paleta de 15 tokens por modo** (no 2): bg/surface/elevated/ink×3/
+  border/divider/accent×3/states×4. Editor con color pickers nativos,
+  syncs cross-mode para acentos.
+- **Catálogo de fuentes**: 13 display + 11 body con preview real (cada
+  opción del listado se renderiza en su propia familia, precarga al montar).
+- **Live preview**: al editar en `/admin/identity` o en el wizard, todo
+  el subtree del `BrandingProvider` (sidebar, header, cards, botones)
+  repinta al instante vía store Zustand `useBrandingPreview`.
+- **API estable**: el backend conserva el shape FLAT pero ahora acepta
+  `extra: array` (JSON) que guarda la paleta rica completa. El adapter
+  `flatToRich` / `richToFlat` traduce entre los dos modelos.
+- **Wizard rediseñado** (`/admin/onboarding`): 5 pasos con animación
+  Framer (identity → palette → typography → layout → summary) y preview
+  card lateral pegajoso.
+
+#### Archivos relevantes
+
+```
+frontend/src/lib/branding-presets.ts        ← catálogo (presets, fonts, layout)
+frontend/src/lib/branding-adapter.ts        ← flat ↔ rich
+frontend/src/store/branding-preview-store.ts ← Zustand draft del editor
+frontend/src/components/branding/BrandingProvider.tsx   ← reescrito
+frontend/src/components/admin/BrandingEditor.tsx        ← reescrito (4 paneles)
+frontend/src/components/admin/OnboardingWizard.tsx      ← reescrito (5 pasos)
+backend/app/Http/Admin/Controllers/BrandingController.php ← acepta `extra`
+docs/IDENTITY_SYSTEM.md                     ← arquitectura completa (NUEVO)
+docs/PRESETS.md                             ← actualizado a 6 presets
+.claude-skills/branding-tokens.md           ← convenciones (--lumia-*)
+```
+
+#### Compatibilidad con presets viejos
+
+Los slugs antiguos (`old-money-emerald`, `ivory-brass`, `navy-classic`,
+`carbon-premium`) siguen aceptados por el backend (campo string libre);
+si el `flatToRich` no encuentra match, usa el default (`emerald`). Tabla
+de migración sugerida en `docs/PRESETS.md`. Para tenants productivos,
+migrar a slugs nuevos cuando el admin abra `/admin/identity` y guarde.
+
+#### Operacional Windows (esta sesión)
+
+- PHP 8.4.20 instalado vía `winget install PHP.PHP.8.4` y configurado
+  con `extension_dir` apuntando al `ext/` del package. Forward slashes
+  con drive letter funcionan en `php.ini` (`C:/Users/.../ext`). Las
+  extensiones que sí cargan son: bcmath, curl, fileinfo, gd, intl,
+  mbstring, openssl, pdo_sqlite, sodium, sqlite3, zip. `pgsql` y
+  `pdo_pgsql` quedan comentadas (no hay binarios libpq compatibles).
+- Composer 2.9.7 instalado vía script oficial dentro del directorio de
+  PHP (`composer` es un phar; invocar como `php "$PHP_DIR/composer"`).
+- Backend SQLite: `migrate:fresh --seed` corre limpio. Login verificado
+  end-to-end con cookie httpOnly.
+- Dev server frontend en :3000 (`nohup npm run dev > /tmp/lumia-frontend.log 2>&1 & disown`).
+- Dev server backend en :8000 (`nohup php artisan serve --host=127.0.0.1 --port=8000 > /tmp/lumia-backend.log 2>&1 & disown`).
+
+---
+
+### Estado anterior (al cierre de auditoría production-readiness — 2026-05-05 AM)
 
 > Tarea 3 (refundición visual + branding + roles + CRUD) cerrada el 2026-04-28.
 > Tarea 3.1 (round de fixes post-feedback) cerrada el 2026-04-29.
@@ -569,8 +664,10 @@ admin@marfil.test          / password   → admin SIN onboarding (wizard demo)
 
 #### Riesgos a vigilar
 
-- Cualquier color hardcoded fuera de `globals.css` rompe el sistema de presets — pasarlo a token o `var(--tenant-*)`.
+- Cualquier color hardcoded fuera de `globals.css` rompe el sistema de presets — pasarlo a token o `var(--lumia-*)`/`var(--tenant-*)`.
 - `BrandingProvider` debe envolver SIEMPRE el subtree de `/admin/*` y `/b/{slug}`. Nunca se aplica a la landing pública (debería conservar identidad LUMIA fija).
+- **Nunca** leer `sessionStorage`/`localStorage`/`window.*` dentro de `useState(() => ...)` — provoca hydration mismatch (ver §10 entrada 2026-05-05 sobre `Preloader`). Hacerlo en `useEffect` post-hidratación.
+- Al añadir un nuevo token a la paleta rica (`BrandingPalette`), recordar actualizar: tipo + DEFAULT_PALETTE_LIGHT + DEFAULT_PALETTE_DARK + cada preset (light/dark) si se quiere customizar + `paletteToCssVars()`. Sin esto, el preview funciona pero el persistido se rompe (el adapter no encuentra el token).
 - **Nunca** invocar `$middleware->statefulApi()` en `bootstrap/app.php` mientras la SPA use Bearer tokens — rompe rutas públicas con 419 (ver §10 entrada del 2026-04-29).
 - Server Components nunca deben redirigir basado sólo en presencia de cookie — siempre validar con `/auth/me` o redirigir al route handler `/api/auth/logout` que la limpia (ver §10 loop replaceState).
 - Si añades migración con tabla nueva tenant-scoped, recuerda el trait `BelongsToTenant` y, en PostgreSQL, política RLS.
