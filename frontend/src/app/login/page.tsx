@@ -35,16 +35,16 @@ export default async function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 relative z-10 texture-paper">
+    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-10 relative z-10 texture-paper">
       <div className="w-full max-w-md">
-        <div className="card-paper p-10">
-          <Link href="/" className="text-primary flex justify-center mb-8">
+        <div className="card-paper p-6 sm:p-10">
+          <Link href="/" className="text-primary flex justify-center mb-6 sm:mb-8">
             <Logo size={32} />
           </Link>
 
-          <div className="mb-8 text-center">
+          <div className="mb-6 sm:mb-8 text-center">
             <div className="text-[10px] tracking-imperial text-accent-3 mb-3">Iniciar sesión</div>
-            <h1 className="font-display italic text-3xl text-ink">Bienvenido de vuelta</h1>
+            <h1 className="font-display italic text-2xl sm:text-3xl text-ink">Bienvenido de vuelta</h1>
             <p className="text-ink-2 text-sm mt-2 leading-relaxed">
               Accede al portal de tu barbería.
             </p>
@@ -52,9 +52,9 @@ export default async function LoginPage() {
 
           <LoginForm />
 
-          <hr className="hairline my-6" />
+          <hr className="hairline my-5 sm:my-6" />
 
-          <div className="text-xs text-ink-muted text-center">
+          <div className="text-[11px] sm:text-xs text-ink-muted text-center break-words">
             <span className="text-ink-2">Demo:</span>{" "}
             <span className="font-mono text-primary">admin@elnavajazo.test</span>{" "}
             <span className="text-ink-muted">/</span>{" "}
@@ -62,7 +62,7 @@ export default async function LoginPage() {
           </div>
         </div>
 
-        <div className="mt-8 text-center text-xs text-ink-muted">
+        <div className="mt-6 sm:mt-8 text-center text-xs text-ink-muted">
           ¿Aún no tienes cuenta?{" "}
           <Link href="/precios" className="text-primary hover-spread inline-block">
             Cotiza un plan

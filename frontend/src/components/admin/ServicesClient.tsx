@@ -73,15 +73,15 @@ export function ServicesClient({ initial, canWrite }: { initial: Service[]; canW
   }
 
   return (
-    <div className="space-y-8">
-      <header className="flex items-end justify-between gap-4">
+    <div className="space-y-6 sm:space-y-8">
+      <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
           <div className="text-[10px] tracking-imperial text-accent-3 mb-3">Catálogo</div>
-          <h1 className="font-display italic text-5xl text-ink leading-tight">Servicios</h1>
+          <h1 className="font-display italic text-3xl sm:text-5xl text-ink leading-tight">Servicios</h1>
           <p className="text-ink-2 text-sm mt-3">{initial.length} servicios disponibles para reserva.</p>
         </div>
         {canWrite ? (
-          <button onClick={() => setEditing("new")} className="btn btn-primary"><Plus size={14} /> Añadir servicio</button>
+          <button onClick={() => setEditing("new")} className="btn btn-primary self-start sm:self-auto"><Plus size={14} /> Añadir servicio</button>
         ) : (
           <div className="text-xs text-ink-muted inline-flex items-center gap-1.5"><Lock size={12} /> sólo lectura</div>
         )}
@@ -91,9 +91,9 @@ export function ServicesClient({ initial, canWrite }: { initial: Service[]; canW
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {initial.map((s) => (
-          <article key={s.id} className="card-paper p-6 group flex flex-col">
+          <article key={s.id} className="card-paper p-4 sm:p-6 group flex flex-col">
             <div className="flex items-start justify-between gap-3 mb-3">
-              <h2 className="font-display italic text-2xl text-ink">{s.name}</h2>
+              <h2 className="font-display italic text-xl sm:text-2xl text-ink">{s.name}</h2>
               <span className={cn(
                 "text-[10px] tracking-imperial px-2 py-0.5 rounded-full",
                 s.is_active ? "bg-success/12 text-success border border-success/30" : "bg-danger/12 text-danger border border-danger/30",
@@ -107,7 +107,7 @@ export function ServicesClient({ initial, canWrite }: { initial: Service[]; canW
               <span className="text-xs text-ink-muted inline-flex items-center gap-1.5">
                 <Clock size={12} /> {s.duration_minutes} min
               </span>
-              <span className="font-display italic text-3xl text-primary tabular-nums">{fmtCents(s.price_cents, s.currency)}</span>
+              <span className="font-display italic text-2xl sm:text-3xl text-primary tabular-nums">{fmtCents(s.price_cents, s.currency)}</span>
             </div>
             {canWrite && (
               <div className="mt-5 pt-4 border-t border-line-fine flex items-center gap-2">
@@ -153,24 +153,24 @@ function ServiceFormModal({
   function update<K extends keyof FormState>(k: K, v: FormState[K]) { setForm((f) => ({ ...f, [k]: v })); }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-ink/40 backdrop-blur-sm" onClick={onCancel}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:px-4 sm:py-6 bg-ink/40 backdrop-blur-sm overflow-y-auto" onClick={onCancel}>
       <form
         onClick={(e) => e.stopPropagation()}
         onSubmit={(e) => { e.preventDefault(); onSubmit(form); }}
-        className="card-paper w-full max-w-xl p-8"
+        className="card-paper w-full max-w-xl max-h-[92vh] overflow-y-auto p-5 sm:p-8 my-auto"
       >
-        <header className="flex items-start justify-between mb-7">
-          <div>
+        <header className="flex items-start justify-between mb-5 sm:mb-7 gap-3">
+          <div className="min-w-0">
             <div className="text-[10px] tracking-imperial text-accent-3 mb-1">{initial ? "Editar" : "Nuevo"}</div>
-            <h2 className="font-display italic text-3xl text-ink">{initial ? initial.name : "Nuevo servicio"}</h2>
+            <h2 className="font-display italic text-2xl sm:text-3xl text-ink truncate">{initial ? initial.name : "Nuevo servicio"}</h2>
           </div>
-          <button type="button" onClick={onCancel} className="text-ink-muted hover:text-ink p-1"><X size={18} /></button>
+          <button type="button" onClick={onCancel} className="text-ink-muted hover:text-ink p-1 shrink-0"><X size={18} /></button>
         </header>
 
         <div className="space-y-4">
           <Field label="Nombre"><input className="input-boxed" value={form.name} onChange={(e) => update("name", e.target.value)} required /></Field>
           <Field label="Descripción"><textarea className="input-boxed" rows={2} value={form.description} onChange={(e) => update("description", e.target.value)} /></Field>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Duración (min)"><input type="number" min={10} max={240} className="input-boxed font-mono" value={form.duration_minutes} onChange={(e) => update("duration_minutes", Number(e.target.value))} /></Field>
             <Field label="Precio (centavos)"><input type="number" min={0} className="input-boxed font-mono" value={form.price_cents} onChange={(e) => update("price_cents", Number(e.target.value))} /></Field>
           </div>

@@ -4,9 +4,9 @@ import { Logo } from "@/components/Logo";
 export function LandingFooter() {
   const year = new Date().getFullYear();
   return (
-    <footer className="relative pt-24 pb-12 px-6 border-t border-line-medium mt-24 bg-bg-paper/60">
+    <footer className="relative pt-16 sm:pt-24 pb-10 sm:pb-12 px-4 sm:px-6 border-t border-line-medium mt-16 sm:mt-24 bg-bg-paper/60">
       <div className="max-w-7xl mx-auto">
-        <div className="grid md:grid-cols-4 gap-12 mb-16">
+        <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-12 mb-12 sm:mb-16">
           <div className="md:col-span-2">
             <Link href="/" className="text-primary inline-block">
               <Logo size={36} />

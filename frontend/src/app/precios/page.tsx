@@ -22,13 +22,13 @@ export default async function PreciosPage() {
   return (
     <>
       <Navbar />
-      <main className="relative z-10 pt-32">
-        <section className="px-6 max-w-4xl mx-auto text-center mb-12">
-          <div className="text-[10px] tracking-imperial text-accent-3 mb-4">Cotización</div>
-          <h1 className="font-display italic text-[clamp(2.4rem,5.5vw,5rem)] leading-[1.02] text-ink">
+      <main className="relative z-10 pt-24 sm:pt-32">
+        <section className="px-4 sm:px-6 max-w-4xl mx-auto text-center mb-8 sm:mb-12">
+          <div className="text-[10px] tracking-imperial text-accent-3 mb-3 sm:mb-4">Cotización</div>
+          <h1 className="font-display italic text-[clamp(2rem,5.5vw,5rem)] leading-[1.05] sm:leading-[1.02] text-ink">
             Encuentra tu <span className="text-emerald-grad">filo.</span>
           </h1>
-          <p className="mt-6 text-ink-2 leading-relaxed">
+          <p className="mt-5 sm:mt-6 text-sm sm:text-base text-ink-2 leading-relaxed">
             Selecciona un plan y nuestro equipo te contacta para activar tu cuenta. Una vez confirmado el
             pago, recibes credenciales y un wizard de identidad para personalizar tu portal.
           </p>
@@ -36,19 +36,19 @@ export default async function PreciosPage() {
 
         <LandingPricing plans={plans} />
 
-        <section className="py-24 px-6">
-          <div className="max-w-3xl mx-auto card-vellum p-10 text-center">
-            <div className="text-[10px] tracking-imperial text-accent-3 mb-4">¿Necesitas otro flujo?</div>
-            <h2 className="font-display italic text-3xl text-ink mb-3">Hablemos.</h2>
-            <p className="text-ink-2 mb-8 leading-relaxed">
+        <section className="py-16 sm:py-24 px-4 sm:px-6">
+          <div className="max-w-3xl mx-auto card-vellum p-6 sm:p-10 text-center">
+            <div className="text-[10px] tracking-imperial text-accent-3 mb-3 sm:mb-4">¿Necesitas otro flujo?</div>
+            <h2 className="font-display italic text-2xl sm:text-3xl text-ink mb-3">Hablemos.</h2>
+            <p className="text-sm sm:text-base text-ink-2 mb-6 sm:mb-8 leading-relaxed">
               Multi-sucursal, integraciones con tu sistema contable, dominios propios o algo único para tu cadena —
               te armamos un plan a la medida.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 items-center justify-center text-sm">
-              <a href="mailto:hola@lumiaaisolutions.com" className="btn btn-primary inline-flex items-center gap-2">
-                <Mail size={15} /> hola@lumiaaisolutions.com
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center justify-center text-sm">
+              <a href="mailto:hola@lumiaaisolutions.com" className="btn btn-primary inline-flex items-center justify-center gap-2 break-all sm:break-normal">
+                <Mail size={15} /> <span className="truncate">hola@lumiaaisolutions.com</span>
               </a>
-              <a href="https://lumiaaisolutions.com" target="_blank" rel="noopener noreferrer" className="btn btn-ghost inline-flex items-center gap-2">
+              <a href="https://lumiaaisolutions.com" target="_blank" rel="noopener noreferrer" className="btn btn-ghost inline-flex items-center justify-center gap-2">
                 <Phone size={15} /> Agendar demo
               </a>
             </div>

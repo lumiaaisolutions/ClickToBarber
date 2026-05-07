@@ -30,28 +30,28 @@ export default async function AdminDashboardPage() {
   const k = data.kpis;
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-8 sm:space-y-12">
       <header>
         <div className="text-[10px] tracking-imperial text-accent-3 mb-3">Buen día</div>
-        <h1 className="font-display italic text-5xl text-ink leading-tight">{data.tenant.name}</h1>
+        <h1 className="font-display italic text-3xl sm:text-5xl text-ink leading-tight">{data.tenant.name}</h1>
         <p className="text-ink-2 text-sm mt-3">
           Plan actual: <span className="font-display italic text-primary">{data.tenant.plan}</span> · {data.features.length} funciones activas
         </p>
       </header>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard label="Citas hoy"      value={k.today_appointments}      icon={<Calendar size={18} />} accent />
         <StatCard label="Citas este mes" value={k.month_appointments}      icon={<TrendingUp size={18} />} />
         <StatCard label="Ingresos mes"   value={fmtCents(k.month_revenue_cents)} icon={<DollarSign size={18} />} accent />
         <StatCard label="Clientes total" value={k.total_clients}            icon={<Users size={18} />} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         <Card className="lg:col-span-2">
           <CardEyebrow>Próximas citas</CardEyebrow>
           <CardTitle>Tu agenda</CardTitle>
           <CardSubtitle>Vista rápida. Para gestión completa entra a Agenda.</CardSubtitle>
-          <Link href="/admin/agenda" className="btn btn-primary mt-7 inline-flex items-center gap-2">
+          <Link href="/admin/agenda" className="btn btn-primary mt-6 sm:mt-7 inline-flex items-center gap-2">
             Ir a Agenda <ArrowRight size={14} />
           </Link>
         </Card>
@@ -66,7 +66,7 @@ export default async function AdminDashboardPage() {
               <CardSubtitle>Clientes inactivos +30 días</CardSubtitle>
             </div>
           </div>
-          <div className="font-display italic text-6xl tabular-nums text-primary leading-none">{k.inactive_clients_30d}</div>
+          <div className="font-display italic text-5xl sm:text-6xl tabular-nums text-primary leading-none">{k.inactive_clients_30d}</div>
           <p className="text-sm text-ink-2 mt-3 mb-5 leading-relaxed">
             Reactiva con un WhatsApp + cupón único en un clic.
           </p>

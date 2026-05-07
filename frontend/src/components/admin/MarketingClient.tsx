@@ -39,40 +39,40 @@ export function MarketingClient({ initialData }: { initialData: Data }) {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2 card-paper p-6">
-        <div className="flex items-center justify-between mb-4">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
+      <div className="lg:col-span-2 card-paper p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <div>
-            <h2 className="font-display text-xl">Clientes inactivos +{initialData.days_threshold} días</h2>
+            <h2 className="font-display text-lg sm:text-xl">Clientes inactivos +{initialData.days_threshold} días</h2>
             <p className="text-xs text-ink-2">{selected.size} de {initialData.clients.length} seleccionados</p>
           </div>
           <button
             onClick={() => setSelected(selected.size === initialData.clients.length ? new Set() : new Set(initialData.clients.map((c) => c.id)))}
-            className="btn-ghost px-3 py-1.5 rounded-full text-xs"
+            className="btn-ghost px-3 py-1.5 rounded-full text-xs self-start sm:self-auto"
           >
             {selected.size === initialData.clients.length ? "Deseleccionar todos" : "Seleccionar todos"}
           </button>
         </div>
 
-        <div className="divide-y divide-border-subtle max-h-[520px] overflow-y-auto -mx-2">
+        <div className="divide-y divide-border-subtle max-h-[420px] sm:max-h-[520px] overflow-y-auto -mx-2">
           {initialData.clients.map((c) => {
             const checked = selected.has(c.id);
             return (
               <label
                 key={c.id}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-3 cursor-pointer rounded-lg transition",
+                  "flex items-center gap-3 px-2 sm:px-3 py-3 cursor-pointer rounded-lg transition",
                   checked && "bg-accent/5",
                 )}
               >
-                <input type="checkbox" checked={checked} onChange={() => toggle(c.id)} className="accent-[var(--accent)]" />
+                <input type="checkbox" checked={checked} onChange={() => toggle(c.id)} className="accent-[var(--accent)] shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium truncate">{c.name}</div>
-                  <div className="text-xs text-ink-2">{c.email} · {c.phone}</div>
+                  <div className="font-medium truncate text-sm">{c.name}</div>
+                  <div className="text-[11px] sm:text-xs text-ink-2 truncate">{c.email} · {c.phone}</div>
                 </div>
                 <div className="text-right shrink-0">
-                  <div className="text-xs text-ink-muted">{c.last_visit ? "Última visita" : "Sin visitas"}</div>
-                  <div className="text-sm font-mono">
+                  <div className="text-[10px] sm:text-xs text-ink-muted">{c.last_visit ? "Última visita" : "Sin visitas"}</div>
+                  <div className="text-xs sm:text-sm font-mono">
                     {c.days_since ? `${c.days_since} días` : "—"}
                   </div>
                 </div>
@@ -82,7 +82,7 @@ export function MarketingClient({ initialData }: { initialData: Data }) {
         </div>
       </div>
 
-      <div className="card-paper p-6 h-fit sticky top-8">
+      <div className="card-paper p-4 sm:p-6 h-fit lg:sticky lg:top-8">
         <div className="flex items-center gap-2 text-accent text-xs uppercase tracking-widest mb-3">
           <MessageCircle size={14} />
           Campaña WhatsApp

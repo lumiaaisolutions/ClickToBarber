@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Logo } from "@/components/Logo";
 import {
   LayoutDashboard,
@@ -16,6 +16,8 @@ import {
   Palette,
   ExternalLink,
   LogOut,
+  Menu,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -39,7 +41,89 @@ interface AdminSidebarProps {
   tenantSlug: string | null;
 }
 
-export function AdminSidebar({ userName, userEmail, userRole, tenantName, tenantSlug }: AdminSidebarProps) {
+export function AdminSidebar(props: AdminSidebarProps) {
+  const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Cierra el drawer al navegar.
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  // Bloquea scroll del body cuando el drawer está abierto.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (mobileOpen) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  }, [mobileOpen]);
+
+  return (
+    <>
+      {/* Topbar móvil/tablet — visible <lg */}
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-30 h-14 px-4 flex items-center justify-between border-b border-line-fine bg-bg-canvas/85 backdrop-blur-md">
+        <Link href="/admin" className="flex items-center gap-2 text-primary">
+          <Logo size={22} />
+          {props.tenantName && (
+            <span className="font-display italic text-ink text-base leading-none truncate max-w-[160px]">
+              {props.tenantName}
+            </span>
+          )}
+        </Link>
+        <button
+          type="button"
+          aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"}
+          aria-expanded={mobileOpen}
+          onClick={() => setMobileOpen((v) => !v)}
+          className="h-9 w-9 inline-flex items-center justify-center rounded-[10px] border border-line-medium text-ink-2 hover:text-primary hover:border-primary/40 transition"
+        >
+          {mobileOpen ? <X size={18} /> : <Menu size={18} />}
+        </button>
+      </header>
+
+      {/* Backdrop drawer móvil */}
+      {mobileOpen && (
+        <button
+          type="button"
+          aria-label="Cerrar menú"
+          onClick={() => setMobileOpen(false)}
+          className="lg:hidden fixed inset-0 z-40 bg-ink/40 backdrop-blur-sm"
+        />
+      )}
+
+      {/* Drawer móvil */}
+      <div
+        className={cn(
+          "lg:hidden fixed top-0 bottom-0 left-0 z-50 w-[280px] max-w-[85vw] border-r border-line-fine bg-bg-paper shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+          mobileOpen ? "translate-x-0" : "-translate-x-full",
+        )}
+        role="dialog"
+        aria-modal="true"
+        aria-hidden={!mobileOpen}
+      >
+        <SidebarContents {...props} onNavigate={() => setMobileOpen(false)} />
+      </div>
+
+      {/* Sidebar desktop — visible lg+ */}
+      <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-[268px] flex-col border-r border-line-fine bg-bg-paper/85 backdrop-blur-md z-20">
+        <SidebarContents {...props} />
+      </aside>
+    </>
+  );
+}
+
+function SidebarContents({
+  userName,
+  userEmail,
+  userRole,
+  tenantName,
+  tenantSlug,
+  onNavigate,
+}: AdminSidebarProps & { onNavigate?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -64,8 +148,8 @@ export function AdminSidebar({ userName, userEmail, userRole, tenantName, tenant
   })();
 
   return (
-    <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-[268px] flex-col border-r border-line-fine bg-bg-paper/85 backdrop-blur-md p-6 z-20">
-      <Link href="/admin" className="flex items-center gap-3 mb-2 mt-1 text-primary">
+    <div className="flex flex-col h-full p-6 overflow-y-auto">
+      <Link href="/admin" className="flex items-center gap-3 mb-2 mt-1 text-primary" onClick={onNavigate}>
         <Logo size={28} />
       </Link>
 
@@ -86,6 +170,7 @@ export function AdminSidebar({ userName, userEmail, userRole, tenantName, tenant
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavigate}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-sm transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
                 active
@@ -114,9 +199,9 @@ export function AdminSidebar({ userName, userEmail, userRole, tenantName, tenant
       )}
 
       <div className="mt-4 pt-4 border-t border-line-fine">
-        <div className="text-xs text-ink">
+        <div className="text-xs text-ink truncate">
           {userName}
-          <div className="text-[10px] text-ink-muted mt-0.5 font-mono">{userEmail}</div>
+          <div className="text-[10px] text-ink-muted mt-0.5 font-mono truncate">{userEmail}</div>
         </div>
         <button
           type="button"
@@ -128,6 +213,6 @@ export function AdminSidebar({ userName, userEmail, userRole, tenantName, tenant
           <span>{pending ? "Cerrando sesión…" : "Cerrar sesión"}</span>
         </button>
       </div>
-    </aside>
+    </div>
   );
 }

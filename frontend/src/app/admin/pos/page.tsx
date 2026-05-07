@@ -17,10 +17,10 @@ export default async function POSPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       <header>
         <div className="text-xs uppercase tracking-[0.3em] text-accent mb-2">POS · Inventario</div>
-        <h1 className="font-display text-4xl">Productos</h1>
+        <h1 className="font-display text-3xl sm:text-4xl">Productos</h1>
         <p className="text-ink-2 text-sm mt-1">Cobra productos junto con servicios y mantén el stock al día.</p>
       </header>
 
@@ -30,12 +30,12 @@ export default async function POSPage() {
         requiredPlan={dash ? "Pro" : null}
         upgradeHref="/admin/billing"
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {products.map((p) => (
-            <div key={p.id} className="card-paper p-5">
+            <div key={p.id} className="card-paper p-4 sm:p-5">
               <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="font-display text-lg">{p.name}</h2>
+                <div className="min-w-0">
+                  <h2 className="font-display text-base sm:text-lg truncate">{p.name}</h2>
                   <div className="text-xs text-ink-muted font-mono mt-1">{p.sku}</div>
                 </div>
                 {p.low_stock && (

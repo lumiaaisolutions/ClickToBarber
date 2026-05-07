@@ -27,24 +27,24 @@ export default async function BillingPage() {
   } catch {}
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <header>
         <div className="text-xs uppercase tracking-[0.3em] text-accent mb-2">Suscripción</div>
-        <h1 className="font-display text-4xl">Tu plan</h1>
+        <h1 className="font-display text-3xl sm:text-4xl">Tu plan</h1>
         <p className="text-ink-2 text-sm mt-1">
           Estás en el plan <span className="text-accent-2 font-medium uppercase">{currentPlan ?? "—"}</span>.
           Cambia cuando quieras, sin sorpresas.
         </p>
       </header>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {plans.map((p) => {
           const isCurrent = p.code === currentPlan;
           return (
             <div
               key={p.code}
               className={cn(
-                "p-6 rounded-[18px] flex flex-col",
+                "p-5 sm:p-6 rounded-[18px] flex flex-col",
                 isCurrent
                   ? "bg-gradient-to-b from-accent/15 via-bg-elevated to-bg-base border-2 border-accent"
                   : "card-paper",
@@ -55,9 +55,9 @@ export default async function BillingPage() {
                   <Sparkles size={11} /> Plan actual
                 </div>
               )}
-              <h2 className="font-display text-2xl">{p.name}</h2>
-              <p className="text-xs text-ink-2 min-h-[40px] mt-1">{p.description}</p>
-              <div className="font-display text-3xl mt-3 tabular-nums">
+              <h2 className="font-display text-xl sm:text-2xl">{p.name}</h2>
+              <p className="text-xs text-ink-2 sm:min-h-[40px] mt-1">{p.description}</p>
+              <div className="font-display text-2xl sm:text-3xl mt-3 tabular-nums">
                 {p.price_cents === 0 ? "Gratis" : p.price.replace(" MXN", "")}
               </div>
               {p.price_cents > 0 && <div className="text-xs text-ink-muted">MXN / mes</div>}

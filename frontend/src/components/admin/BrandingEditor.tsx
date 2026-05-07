@@ -8,7 +8,7 @@
  * onboarding. Toda edición se publica al `branding-preview-store` para que
  * el resto de la página repinte en vivo.
  */
-import { useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Loader2, Lock, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -26,9 +26,32 @@ import {
   type BrandingHeadingFont,
   type RichBranding,
 } from "@/lib/branding-presets";
-import { flatToRich, richToFlat } from "@/lib/branding-adapter";
+import { flatToRich, richToFlat, type FlatBranding } from "@/lib/branding-adapter";
 import type { TenantBranding } from "@/components/branding/BrandingProvider";
 import { useBrandingPreview } from "@/store/branding-preview-store";
+
+/**
+ * `<input type="color">` solo acepta `#RRGGBB`. Si el token persistido es
+ * rgba/hsl/hex-corto/hex-con-alpha, lo normalizamos antes de pasarlo al
+ * picker — si no, React 19 + Turbopack revientan el commit phase porque
+ * el input se vuelve uncontrolled.
+ */
+function toHexColor(input: string | undefined | null): string {
+  if (!input) return "#000000";
+  const trimmed = String(input).trim();
+  const hexFull = trimmed.match(/^#([0-9A-Fa-f]{6})(?:[0-9A-Fa-f]{2})?$/);
+  if (hexFull) return `#${hexFull[1].toLowerCase()}`;
+  const hexShort = trimmed.match(/^#([0-9A-Fa-f])([0-9A-Fa-f])([0-9A-Fa-f])$/);
+  if (hexShort) {
+    return `#${hexShort[1]}${hexShort[1]}${hexShort[2]}${hexShort[2]}${hexShort[3]}${hexShort[3]}`.toLowerCase();
+  }
+  const rgba = trimmed.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+  if (rgba) {
+    const hex = (n: number) => Math.max(0, Math.min(255, n)).toString(16).padStart(2, "0");
+    return `#${hex(parseInt(rgba[1], 10))}${hex(parseInt(rgba[2], 10))}${hex(parseInt(rgba[3], 10))}`;
+  }
+  return "#000000";
+}
 
 export type BrandingEditorStep =
   | "identity"
@@ -105,24 +128,52 @@ export function BrandingEditor({
   const setPreview = useBrandingPreview((s) => s.setPreview);
   const clearPreview = useBrandingPreview((s) => s.clearPreview);
 
-  const [draft, setDraft] = useState<RichBranding>(() =>
-    flatToRich({ ...initial, admin_display_name: initial.admin_display_name ?? tenantName }),
+  const buildDraft = useCallback(
+    (flat: TenantBranding) =>
+      flatToRich({ ...flat, admin_display_name: flat.admin_display_name ?? tenantName }),
+    [tenantName],
   );
 
-  // Live preview: cualquier edición se refleja inmediatamente en el resto
-  // del subtree del BrandingProvider.
-  useEffect(() => {
-    setPreview(draft);
-  }, [draft, setPreview]);
+  const [draft, setDraftState] = useState<RichBranding>(() => buildDraft(initial));
 
-  // Al desmontar, limpiar el preview para que vuelva al persistido.
+  // Cuando el editor está "dirty" (el usuario tocó algo) publicamos al
+  // store del preview para que todo el subtree del BrandingProvider repinte.
+  // Mientras no esté dirty, el provider usa el persistido — así, tras
+  // guardar, el `router.refresh()` trae el nuevo `initial` y se refleja
+  // sin que el draft viejo lo tape.
+  const dirtyRef = useRef(false);
+
+  const setDraft = useCallback(
+    (next: RichBranding) => {
+      dirtyRef.current = true;
+      setDraftState(next);
+      setPreview(next);
+      setSaved(false);
+    },
+    [setPreview],
+  );
+
+  // Sincroniza el draft con el server cuando `initial` cambia (post refresh).
+  // Solo lo hacemos si NO estamos dirty — para no pisar la edición del usuario.
+  const initialKey = JSON.stringify(initial);
+  useEffect(() => {
+    if (dirtyRef.current) return;
+    setDraftState(buildDraft(initial));
+    // intencional: queremos reaccionar a cambios estructurales del initial
+    // serializado, no a la identidad del objeto.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialKey, buildDraft]);
+
+  // Al desmontar, limpiar el preview.
   useEffect(() => {
     return () => clearPreview();
   }, [clearPreview]);
 
   function discard() {
-    const fresh = flatToRich({ ...initial, admin_display_name: initial.admin_display_name ?? tenantName });
-    setDraft(fresh);
+    dirtyRef.current = false;
+    const fresh = buildDraft(initial);
+    setDraftState(fresh);
+    clearPreview();
     setSaved(false);
     setError(null);
   }
@@ -130,7 +181,7 @@ export function BrandingEditor({
   function save() {
     if (!canWrite) return;
     setError(null);
-    const flat = richToFlat(draft, initial);
+    const flat = richToFlat(draft, initial as unknown as FlatBranding);
     startTransition(async () => {
       const res = await fetch("/api/admin/branding", {
         method: "PUT",
@@ -138,21 +189,30 @@ export function BrandingEditor({
         body: JSON.stringify(flat),
         cache: "no-store",
       });
+      const payload = (await res.json().catch(() => null)) as
+        | { data?: TenantBranding; message?: string }
+        | null;
       if (!res.ok) {
-        const json = (await res.json().catch(() => null)) as { message?: string } | null;
-        setError(json?.message ?? "Error guardando.");
+        setError(payload?.message ?? "Error guardando.");
         return;
       }
+      // Sincroniza con la verdad del servidor (la respuesta trae el branding
+      // ya persistido). Limpiar preview + dirty para que el provider muestre
+      // el persistido directamente.
+      if (payload?.data) {
+        const fresh = buildDraft(payload.data);
+        setDraftState(fresh);
+      }
+      dirtyRef.current = false;
+      clearPreview();
       setSaved(true);
-      // Tras guardar, mantenemos el preview activo sólo hasta el siguiente
-      // refresh; el server-component recargará el branding persistido.
       router.refresh();
     });
   }
 
   return (
-    <div className="grid lg:grid-cols-[1.3fr_1fr] gap-8">
-      <div className="space-y-8">
+    <div className="grid md:grid-cols-[1fr_0.85fr] lg:grid-cols-[1.3fr_1fr] gap-6 lg:gap-8">
+      <div className="space-y-6 sm:space-y-8 min-w-0">
         {!canWrite && (
           <div className="rounded-[12px] border border-line-medium bg-bg-vellum/40 p-4 text-sm text-ink-2 inline-flex items-center gap-2.5">
             <Lock size={14} className="text-accent-3" />
@@ -169,20 +229,20 @@ export function BrandingEditor({
         )}
 
         {canWrite && (
-          <div className="flex items-center gap-3 pt-4 border-t border-line-fine">
-            <button type="button" onClick={save} disabled={pending} className="btn btn-primary disabled:opacity-50">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 pt-4 border-t border-line-fine">
+            <button type="button" onClick={save} disabled={pending} className="btn btn-primary disabled:opacity-50 justify-center">
               {pending ? <Loader2 className="animate-spin" size={14} /> : <Check size={14} />}
               Guardar identidad
             </button>
-            <button type="button" onClick={discard} className="btn btn-ghost text-sm">
+            <button type="button" onClick={discard} className="btn btn-ghost text-sm justify-center">
               <RefreshCw size={14} /> Descartar cambios
             </button>
-            {saved && <span className="text-xs text-success ml-2 italic">Guardado.</span>}
+            {saved && <span className="text-xs text-success sm:ml-2 italic self-center">Guardado.</span>}
           </div>
         )}
       </div>
 
-      <div className="sticky top-8 self-start">
+      <div className="md:sticky md:top-6 md:self-start min-w-0">
         <BrandingPreviewCard branding={draft} />
       </div>
     </div>
@@ -427,22 +487,26 @@ function ColorPicker({
   value: string;
   onChange: (v: string) => void;
 }) {
+  // El `<input type="color">` SOLO acepta hex `#RRGGBB`. Normalizamos para
+  // evitar el crash de commitMutationEffectsOnFiber cuando llega rgba/hex-alpha.
+  const safeHex = toHexColor(value);
+  const textValue = value ?? "";
   return (
     <label className="block">
       <FieldLabel>{label}</FieldLabel>
       <div className="relative rounded-[12px] border border-line-medium overflow-hidden bg-bg-canvas">
         <input
           type="color"
-          value={value}
+          value={safeHex}
           onChange={(e) => onChange(e.target.value)}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           aria-label={label}
         />
-        <div className="h-12 w-full pointer-events-none" style={{ backgroundColor: value }} />
+        <div className="h-12 w-full pointer-events-none" style={{ backgroundColor: safeHex }} />
         <div className="px-3 py-2 border-t border-line-fine flex items-center">
           <input
             type="text"
-            value={value}
+            value={textValue}
             onChange={(e) => onChange(e.target.value)}
             onClick={(e) => e.stopPropagation()}
             className="w-full bg-transparent font-mono text-xs focus:outline-none"
@@ -488,7 +552,7 @@ function TypographyPanel({
       <div className="grid md:grid-cols-2 gap-5 mt-4">
         <div>
           <FieldLabel>Encabezados (display)</FieldLabel>
-          <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+          <div className="space-y-2 max-h-[280px] sm:max-h-[360px] md:max-h-[420px] overflow-y-auto pr-1">
             {HEADING_FONTS.map((f) => (
               <FontOption
                 key={f.id}
@@ -511,7 +575,7 @@ function TypographyPanel({
         </div>
         <div>
           <FieldLabel>Texto / UI</FieldLabel>
-          <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+          <div className="space-y-2 max-h-[280px] sm:max-h-[360px] md:max-h-[420px] overflow-y-auto pr-1">
             {BODY_FONTS.map((f) => (
               <FontOption
                 key={f.id}

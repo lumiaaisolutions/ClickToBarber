@@ -54,31 +54,31 @@ export function LandingPricing({ plans }: { plans: Plan[] }) {
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
 
   return (
-    <section id="pricing" className="relative py-32 px-6 bg-bg-paper/40">
+    <section id="pricing" className="relative py-20 sm:py-32 px-4 sm:px-6 bg-bg-paper/40">
       <div className="max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="text-center mb-14"
+          className="text-center mb-10 sm:mb-14"
         >
-          <div className="text-[10px] tracking-imperial text-accent-3 mb-4">Planes</div>
-          <h2 className="font-display italic text-[clamp(2.4rem,5.5vw,5rem)] leading-[1.02] text-ink">
+          <div className="text-[10px] tracking-imperial text-accent-3 mb-3 sm:mb-4">Planes</div>
+          <h2 className="font-display italic text-[clamp(2rem,5.5vw,5rem)] leading-[1.05] sm:leading-[1.02] text-ink">
             Elige tu <span className="text-emerald-grad">filo.</span>
           </h2>
-          <p className="mt-6 text-ink-2 max-w-xl mx-auto leading-relaxed">
+          <p className="mt-5 sm:mt-6 text-sm sm:text-base text-ink-2 max-w-xl mx-auto leading-relaxed">
             Sin permanencia. Sin migración al subir de plan. Toda función premium
             permanece visible con candado dorado hasta que la actives.
           </p>
         </motion.div>
 
         {/* Toggle facturación */}
-        <div className="flex justify-center mb-12">
+        <div className="flex justify-center mb-8 sm:mb-12">
           <BillingToggle value={billing} onChange={setBilling} />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
           {plans.map((plan, i) => (
             <PricingCard
               key={plan.code}
@@ -127,7 +127,7 @@ function PricingCard({
       viewport={{ once: true, margin: "-60px" }}
       transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: index * 0.06 }}
       className={cn(
-        "relative flex flex-col p-7 rounded-[20px] transition-all duration-500",
+        "relative flex flex-col p-5 sm:p-6 lg:p-7 rounded-[20px] transition-all duration-500",
         isPro
           ? "bg-bg-canvas border border-primary/35 shadow-[0_30px_60px_-32px_rgba(31,61,43,0.32)] ring-1 ring-primary/15"
           : "bg-bg-canvas border border-line-medium hover:border-primary/30 hover:shadow-[0_24px_48px_-32px_rgba(31,61,43,0.18)]",
@@ -146,13 +146,13 @@ function PricingCard({
         </span>
       )}
 
-      <header className="mb-6">
-        <h3 className="font-display italic text-3xl text-ink leading-tight">{plan.name}</h3>
-        <p className="text-sm text-ink-2 mt-2 leading-snug min-h-[40px]">{tagline}</p>
+      <header className="mb-5 sm:mb-6">
+        <h3 className="font-display italic text-2xl sm:text-3xl text-ink leading-tight">{plan.name}</h3>
+        <p className="text-xs sm:text-sm text-ink-2 mt-2 leading-snug sm:min-h-[40px]">{tagline}</p>
       </header>
 
-      <div className="mb-7 flex items-baseline gap-1.5">
-        <span className="font-display italic text-5xl tabular-nums text-ink leading-none">
+      <div className="mb-6 sm:mb-7 flex items-baseline gap-1.5">
+        <span className="font-display italic text-4xl sm:text-5xl tabular-nums text-ink leading-none">
           {display}
         </span>
         {effective > 0 && (

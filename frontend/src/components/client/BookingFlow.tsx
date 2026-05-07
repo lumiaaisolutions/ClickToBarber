@@ -90,11 +90,11 @@ export function BookingFlow({
   }
 
   return (
-    <section className="py-12 px-6">
+    <section className="py-8 sm:py-12 px-4 sm:px-6">
       <div className="max-w-4xl mx-auto">
         <Stepper current={stepIndex} />
 
-        <div className="mt-10 card-paper p-6 sm:p-10 min-h-[440px]">
+        <div className="mt-6 sm:mt-10 card-paper p-4 sm:p-6 lg:p-10 min-h-[440px]">
           <AnimatePresence mode="wait">
             {step === "service" && (
               <Pane key="service" title="Elige tu servicio" icon={<Scissors size={20} />}>
@@ -160,14 +160,14 @@ export function BookingFlow({
                   ) : slots.length === 0 ? (
                     <div className="text-ink-muted text-sm py-10 text-center italic">No hay slots disponibles para esta fecha.</div>
                   ) : (
-                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2">
                       {slots.map((s) => (
                         <button
                           key={s.starts_at}
                           disabled={!s.available}
                           onClick={() => { setSlot(s); setStep("details"); }}
                           className={cn(
-                            "py-3 rounded-[10px] text-sm font-mono tabular-nums transition-all duration-200",
+                            "py-3 rounded-[10px] text-xs sm:text-sm font-mono tabular-nums transition-all duration-200",
                             s.available
                               ? "border border-line-medium hover:border-primary hover:bg-primary/8 text-ink"
                               : "opacity-30 cursor-not-allowed line-through",
@@ -259,14 +259,14 @@ function Pane({ title, icon, onBack, children }: { title: string; icon?: React.R
       exit={{ opacity: 0, y: -12 }}
       transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div className="flex items-center justify-between mb-7">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-[10px] bg-primary/8 text-primary border border-primary/16">{icon}</div>
-          <h2 className="font-display italic text-3xl text-ink">{title}</h2>
+      <div className="flex items-center justify-between mb-5 sm:mb-7 gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="p-1.5 sm:p-2 rounded-[10px] bg-primary/8 text-primary border border-primary/16 shrink-0">{icon}</div>
+          <h2 className="font-display italic text-xl sm:text-3xl text-ink truncate">{title}</h2>
         </div>
         {onBack && (
-          <button onClick={onBack} className="btn btn-ghost text-xs py-1.5 px-3 inline-flex items-center gap-1">
-            <ArrowLeft size={13} /> Atrás
+          <button onClick={onBack} className="btn btn-ghost text-xs py-1.5 px-3 inline-flex items-center gap-1 shrink-0">
+            <ArrowLeft size={13} /> <span className="hidden sm:inline">Atrás</span>
           </button>
         )}
       </div>
@@ -278,20 +278,20 @@ function Pane({ title, icon, onBack, children }: { title: string; icon?: React.R
 function Stepper({ current }: { current: number }) {
   const labels = ["Servicio", "Barbero", "Hora", "Datos", "Listo"];
   return (
-    <div className="flex items-center justify-between gap-2">
+    <div className="flex items-center justify-between gap-1 sm:gap-2">
       {labels.map((l, i) => (
-        <div key={l} className="flex-1 flex items-center gap-2">
+        <div key={l} className="flex-1 flex items-center gap-1 sm:gap-2 min-w-0">
           <div
             className={cn(
-              "shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-mono transition-all duration-300",
+              "shrink-0 w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-mono transition-all duration-300",
               i < current && "bg-primary text-bg-canvas",
-              i === current && "bg-primary text-bg-canvas ring-4 ring-primary/16",
+              i === current && "bg-primary text-bg-canvas ring-2 sm:ring-4 ring-primary/16",
               i > current && "bg-bg-paper text-ink-muted border border-line-medium",
             )}
           >
-            {i < current ? <Check size={13} /> : i + 1}
+            {i < current ? <Check size={12} /> : i + 1}
           </div>
-          <div className={cn("text-xs hidden sm:block tracking-noble", i <= current ? "text-ink" : "text-ink-muted")}>{l}</div>
+          <div className={cn("text-[10px] sm:text-xs hidden md:block tracking-noble truncate", i <= current ? "text-ink" : "text-ink-muted")}>{l}</div>
           {i < labels.length - 1 && <div className={cn("flex-1 h-px", i < current ? "bg-primary" : "bg-line-medium")} />}
         </div>
       ))}
@@ -308,7 +308,10 @@ function DatePicker({ value, onChange, tz }: { value: string; onChange: (d: stri
   });
 
   return (
-    <div className="flex gap-2 overflow-x-auto pb-2 -mx-2 px-2">
+    <div
+      className="flex gap-2 overflow-x-auto pb-3 -mx-4 sm:-mx-2 px-4 sm:px-2 snap-x snap-mandatory"
+      style={{ scrollbarWidth: "thin" }}
+    >
       {days.map((d) => {
         const iso = isoDate(d);
         const sel = iso === value;
@@ -317,12 +320,12 @@ function DatePicker({ value, onChange, tz }: { value: string; onChange: (d: stri
             key={iso}
             onClick={() => onChange(iso)}
             className={cn(
-              "shrink-0 px-3 py-3 rounded-[10px] border text-center min-w-[72px] transition-all duration-300",
+              "shrink-0 px-2 sm:px-3 py-2.5 sm:py-3 rounded-[10px] border text-center min-w-[64px] sm:min-w-[72px] snap-start transition-all duration-300",
               sel ? "bg-primary text-bg-canvas border-primary" : "border-line-medium hover:border-primary text-ink",
             )}
           >
             <div className="text-[9px] tracking-imperial opacity-80">{WEEKDAYS_ES[d.getDay()]}</div>
-            <div className="font-display italic text-2xl tabular-nums leading-none mt-1">{d.getDate()}</div>
+            <div className="font-display italic text-xl sm:text-2xl tabular-nums leading-none mt-1">{d.getDate()}</div>
             <div className="text-[10px] opacity-75 mt-1">{d.toLocaleDateString("es-MX", { month: "short", timeZone: tz })}</div>
           </button>
         );

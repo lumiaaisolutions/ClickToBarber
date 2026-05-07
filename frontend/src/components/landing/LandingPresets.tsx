@@ -63,29 +63,29 @@ const PRESETS: Preset[] = [
 
 export function LandingPresets() {
   return (
-    <section id="presets" className="relative py-32 px-6">
+    <section id="presets" className="relative py-20 sm:py-32 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="text-center mb-20"
+          className="text-center mb-12 sm:mb-20"
         >
-          <div className="text-[10px] tracking-imperial text-accent-3 mb-4">Identidad</div>
-          <h2 className="font-display italic text-[clamp(2.4rem,5.5vw,5rem)] leading-[1.02] text-ink">
+          <div className="text-[10px] tracking-imperial text-accent-3 mb-3 sm:mb-4">Identidad</div>
+          <h2 className="font-display italic text-[clamp(2rem,5.5vw,5rem)] leading-[1.05] sm:leading-[1.02] text-ink">
             Cuatro presets.
             <br />
             <span className="text-emerald-grad">Infinitas barberías.</span>
           </h2>
-          <p className="mt-6 text-ink-2 max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-5 sm:mt-6 text-sm sm:text-base text-ink-2 max-w-2xl mx-auto leading-relaxed">
             Empieza con un preset cuidado por nosotros y ajústalo a tu marca: colores,
             tipografías, radios, densidad y logo. Tu identidad vive en <span className="font-display italic">/admin</span> y
             en el link que compartes con tus clientes.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
           {PRESETS.map((p, i) => (
             <motion.article
               key={p.code}
@@ -97,8 +97,8 @@ export function LandingPresets() {
               style={{ background: p.canvas }}
             >
               {/* Mini-mock con la paleta */}
-              <div className="p-8 pb-6 relative" style={{ color: p.ink }}>
-                <div className="flex items-center justify-between mb-5">
+              <div className="p-5 sm:p-6 lg:p-8 pb-5 sm:pb-6 relative" style={{ color: p.ink }}>
+                <div className="flex items-center justify-between mb-4 sm:mb-5">
                   <div
                     className="text-[10px] tracking-imperial"
                     style={{ color: p.primary }}
@@ -113,17 +113,17 @@ export function LandingPresets() {
                 </div>
 
                 <h3
-                  className="font-display italic text-3xl mb-3"
+                  className="font-display italic text-2xl sm:text-3xl mb-2 sm:mb-3"
                   style={{ color: p.ink, fontFamily: p.font }}
                 >
                   {p.name}
                 </h3>
-                <p className="text-sm leading-relaxed" style={{ color: p.ink, opacity: 0.74 }}>
+                <p className="text-xs sm:text-sm leading-relaxed" style={{ color: p.ink, opacity: 0.74 }}>
                   {p.description}
                 </p>
 
                 {/* Mock botones */}
-                <div className="mt-7 flex gap-3">
+                <div className="mt-5 sm:mt-7 flex flex-wrap gap-2 sm:gap-3">
                   <span
                     className="inline-flex items-center px-4 py-2 text-xs tracking-noble"
                     style={{
@@ -152,7 +152,7 @@ export function LandingPresets() {
 
               {/* Banda inferior con tipografía */}
               <div
-                className="px-8 py-5 border-t flex items-center justify-between"
+                className="px-5 sm:px-6 lg:px-8 py-4 sm:py-5 border-t flex items-center justify-between gap-3"
                 style={{ borderColor: `${p.ink}1c`, background: p.paper }}
               >
                 <span
@@ -162,7 +162,7 @@ export function LandingPresets() {
                   lumia
                 </span>
                 <span
-                  className="text-[10px] tracking-imperial"
+                  className="text-[9px] sm:text-[10px] tracking-imperial truncate"
                   style={{ color: p.ink, opacity: 0.6 }}
                 >
                   {p.font.split(" ")[0]} · Inter Tight

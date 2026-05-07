@@ -101,8 +101,8 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           tenantName={me.tenant?.name}
           tenantSlug={me.tenant?.slug ?? null}
         />
-        <main className="flex-1 ml-0 md:ml-[268px] min-h-screen">
-          <div className="max-w-7xl mx-auto px-6 py-10">
+        <main className="flex-1 ml-0 lg:ml-[268px] min-h-screen pt-14 lg:pt-0">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
             {children}
           </div>
         </main>

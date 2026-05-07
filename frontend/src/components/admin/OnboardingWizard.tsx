@@ -114,25 +114,25 @@ export function OnboardingWizard({
   }
 
   return (
-    <main className="min-h-screen px-4 md:px-6 py-8 md:py-14 texture-paper relative">
+    <main className="min-h-screen px-3 sm:px-4 md:px-6 py-6 sm:py-8 md:py-14 texture-paper relative">
       <div className="max-w-5xl mx-auto w-full">
-        <header className="flex items-center justify-between mb-10">
-          <div className="text-primary">
+        <header className="flex items-center justify-between mb-6 sm:mb-10 gap-3">
+          <div className="text-primary shrink-0">
             <Logo size={26} />
           </div>
-          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.22em] text-accent-3">
-            <Sparkles size={12} strokeWidth={1.5} />
-            Personaliza tu sucursal
+          <div className="flex items-center gap-1.5 text-[9px] sm:text-[10px] uppercase tracking-[0.18em] sm:tracking-[0.22em] text-accent-3 text-right">
+            <Sparkles size={12} strokeWidth={1.5} className="shrink-0" />
+            <span className="hidden sm:inline">Personaliza tu sucursal</span>
           </div>
         </header>
 
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <p className="text-[10px] uppercase tracking-[0.3em] text-accent-3 mb-2">
             Paso {stepIndex + 1} de {STEPS.length}
             {!isSummary && ` · ${STEP_TITLES[step]}`}
             {isSummary && " · Resumen"}
           </p>
-          <h1 className="font-display italic text-3xl md:text-5xl text-ink leading-[1.1]">
+          <h1 className="font-display italic text-2xl sm:text-3xl md:text-5xl text-ink leading-[1.1]">
             {isSummary
               ? `${draft.displayName || tenantName || "Tu barbería"}, así te verán.`
               : "Diseñemos tu identidad."}
@@ -144,25 +144,25 @@ export function OnboardingWizard({
           </p>
 
           {/* progress dots */}
-          <div className="flex items-center gap-1.5 mt-6">
+          <div className="flex items-center gap-1 sm:gap-1.5 mt-5 sm:mt-6">
             {STEPS.map((_, i) => (
               <span
                 key={i}
                 className={cn(
                   "h-1.5 rounded-full transition-all",
                   i < stepIndex
-                    ? "bg-accent w-6"
+                    ? "bg-accent w-4 sm:w-6"
                     : i === stepIndex
-                      ? "bg-ink w-10"
-                      : "bg-line-medium w-6",
+                      ? "bg-ink w-8 sm:w-10"
+                      : "bg-line-medium w-4 sm:w-6",
                 )}
               />
             ))}
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-[1.4fr_1fr] gap-8 items-start">
-          <div className="rounded-[18px] border border-line-medium bg-bg-canvas p-5 md:p-8">
+        <div className="grid md:grid-cols-[1fr_0.85fr] lg:grid-cols-[1.4fr_1fr] gap-6 lg:gap-8 items-start">
+          <div className="rounded-[18px] border border-line-medium bg-bg-canvas p-4 sm:p-5 md:p-8">
             <AnimatePresence mode="wait">
               <motion.div
                 key={step}
@@ -221,22 +221,22 @@ export function OnboardingWizard({
               </div>
             )}
 
-            <div className="flex items-center justify-between gap-2 mt-7 pt-5 border-t border-line-fine">
+            <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 mt-6 sm:mt-7 pt-5 border-t border-line-fine">
               <button
                 type="button"
                 onClick={prev}
                 disabled={isFirst || pending}
-                className="btn btn-ghost text-sm disabled:opacity-30"
+                className="btn btn-ghost text-sm disabled:opacity-30 justify-center"
               >
                 <ArrowLeft size={14} strokeWidth={1.6} /> Anterior
               </button>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                 {!isSummary && (
                   <button
                     type="button"
                     onClick={() => setStepIndex(STEPS.length - 1)}
-                    className="btn btn-ghost text-sm"
+                    className="btn btn-ghost text-sm justify-center"
                   >
                     Saltar al resumen
                   </button>
@@ -246,13 +246,13 @@ export function OnboardingWizard({
                     type="button"
                     onClick={complete}
                     disabled={pending}
-                    className="btn btn-primary disabled:opacity-50"
+                    className="btn btn-primary disabled:opacity-50 justify-center"
                   >
                     {pending ? <Loader2 className="animate-spin" size={14} /> : <Check size={14} strokeWidth={1.8} />}
                     Aplicar y entrar
                   </button>
                 ) : (
-                  <button type="button" onClick={next} disabled={pending} className="btn btn-primary disabled:opacity-50">
+                  <button type="button" onClick={next} disabled={pending} className="btn btn-primary disabled:opacity-50 justify-center">
                     Siguiente <ArrowRight size={14} strokeWidth={1.6} />
                   </button>
                 )}
@@ -260,8 +260,8 @@ export function OnboardingWizard({
             </div>
           </div>
 
-          {/* Preview lateral pegajoso */}
-          <div className="hidden lg:block sticky top-8 self-start">
+          {/* Preview lateral pegajoso (md+) */}
+          <div className="hidden md:block lg:sticky lg:top-8 self-start">
             <BrandingPreviewCard branding={draft} />
           </div>
         </div>

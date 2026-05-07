@@ -45,34 +45,34 @@ export function AgendaView({ appointments }: { appointments: AppointmentDto[] })
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: idx * 0.04 }}
           >
-            <div className="flex items-center gap-3 mb-3">
-              <div className="font-display text-2xl">
+            <div className="flex flex-wrap items-center gap-3 mb-3">
+              <div className="font-display text-xl sm:text-2xl">
                 {d.toLocaleDateString("es-MX", { weekday: "long", day: "2-digit", month: "long" })}
               </div>
               <div className="text-xs text-ink-muted">{items.length} cita{items.length !== 1 && "s"}</div>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {items.map((a) => (
-                <div key={a.id} className="card-paper p-5 hover:border-line-strong transition">
-                  <div className="flex items-start justify-between gap-4">
+                <div key={a.id} className="card-paper p-4 sm:p-5 hover:border-line-strong transition">
+                  <div className="flex items-start justify-between gap-3 sm:gap-4">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Clock size={14} className="text-accent" />
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mb-2">
+                        <Clock size={14} className="text-accent shrink-0" />
                         <span className="font-mono text-sm tabular-nums">{fmtTime(a.starts_at)}</span>
                         <span className="text-ink-muted text-xs">→ {fmtTime(a.ends_at)}</span>
                       </div>
-                      <div className="font-display text-lg truncate">{a.service.name}</div>
-                      <div className="flex items-center gap-1.5 text-xs text-ink-2 mt-1">
-                        <Scissors size={11} /> {a.barber.name}
-                        <span className="text-ink-muted mx-1">·</span>
-                        <User size={11} /> {a.client.name}
+                      <div className="font-display text-base sm:text-lg truncate">{a.service.name}</div>
+                      <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] sm:text-xs text-ink-2 mt-1">
+                        <Scissors size={11} className="shrink-0" /> <span className="truncate max-w-[120px]">{a.barber.name}</span>
+                        <span className="text-ink-muted mx-0.5 sm:mx-1">·</span>
+                        <User size={11} className="shrink-0" /> <span className="truncate max-w-[140px]">{a.client.name}</span>
                       </div>
                     </div>
                     <div className="text-right shrink-0">
                       <span className={cn("inline-block px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider border", STATUS_COLOR[a.status] ?? STATUS_COLOR.cancelled)}>
                         {a.status_label}
                       </span>
-                      <div className="font-display text-lg text-accent mt-2">{fmtCents(a.price_cents)}</div>
+                      <div className="font-display text-base sm:text-lg text-accent mt-2">{fmtCents(a.price_cents)}</div>
                       {a.deposit_status === "captured" && (
                         <div className="text-[10px] text-success">Depósito {fmtCents(a.deposit_cents)} ✓</div>
                       )}

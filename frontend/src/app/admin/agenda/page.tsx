@@ -16,10 +16,10 @@ export default async function AgendaPage() {
   } catch {}
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       <header>
         <div className="text-xs uppercase tracking-[0.3em] text-accent mb-2">Agenda</div>
-        <h1 className="font-display text-4xl">Próximos 7 días</h1>
+        <h1 className="font-display text-3xl sm:text-4xl">Próximos 7 días</h1>
         <p className="text-ink-2 text-sm mt-1">{appointments.length} citas en el rango.</p>
       </header>
       <AgendaView appointments={appointments} />

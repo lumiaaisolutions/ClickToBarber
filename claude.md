@@ -482,6 +482,41 @@ Anima el grupo `.scissor` con un giro sutil al hover (apertura de tijera).
 - **Solución**: el state inicial siempre arranca en `"visible"` (matchea el server). La lectura de `sessionStorage` se mueve a un `useEffect`. Si el flag está, hace `setPhase("hidden")` post-hidratación → re-render normal sin error. Returnees ven un flicker brevísimo, aceptable.
 - **Prevención**: regla — **nunca** leer `sessionStorage`/`localStorage`/`window.*` dentro de `useState(() => ...)` o durante el body del componente. Si se necesita, hacerlo en `useEffect`. Misma regla aplica a `useReducer` con initializer.
 
+### [2026-05-06] Bugs del editor de identidad + pase de responsive completo
+- **Contexto**: sesión post-port de identidad. El usuario reportó (a) crash de React `commitMutationEffectsOnFiber` al abrir `/admin/identity` y (b) "no guarda" al editar. Después pidió hacer el sistema responsive 100%.
+- **Error 1**: `commitMutationEffectsOnFiber` + warning "A component is changing an uncontrolled input to be controlled".
+- **Causa raíz 1**: `<input type="color">` solo acepta `#RRGGBB`. Los tokens `border` y `divider` de `DEFAULT_PALETTE_LIGHT` son rgba (`rgba(26,31,27,0.16)`), inválidos para el picker. El input se inicializaba como uncontrolled (browser ignora rgba) y luego React intentaba volverlo controlled → crash en commit phase de React 19 + Turbopack.
+- **Solución 1**: añadida función `toHexColor()` en `BrandingEditor.tsx` que normaliza rgba/hex-corto/hex-con-alpha → `#RRGGBB`. Solo se aplica al `value` del `<input type="color">`; el input de texto sigue mostrando el formato original.
+- **Error 2**: editor "no guardaba" — el backend SÍ persistía (`PUT /api/admin/branding 200` en logs), pero la UI mostraba el estado viejo.
+- **Causa raíz 2**: tres bugs encadenados:
+  1. El `useEffect([draft, setPreview])` mantenía el draft viejo en el `branding-preview-store` (Zustand) y el `BrandingProvider` prioriza el preview sobre el persistido → veías la versión vieja.
+  2. El `useState(() => flatToRich(initial))` no se sincronizaba con el `initial` recargado por `router.refresh()`.
+  3. El crash de color picker (Error 1) impedía completar el flow visual de "Guardado.".
+- **Solución 2**: refactor de `BrandingEditor`:
+  - Push al preview ahora ocurre dentro de un `setDraft()` wrapper — solo se publica cuando el usuario edita explícitamente, no en cada render.
+  - `dirtyRef` (useRef) marca cuándo el editor tiene cambios sin guardar.
+  - Tras `save()` exitoso: leemos `payload.data` del PUT, sincronizamos el draft con la verdad del server, `clearPreview()` y `dirtyRef = false`.
+  - Si `initial` cambia (router.refresh) y `dirtyRef = false`, el draft se reconstruye automáticamente vía `useEffect([initialKey, buildDraft])` sobre `JSON.stringify(initial)`.
+- **Pase de responsive (32 findings auditados, todos arreglados)**:
+  - `AdminSidebar` reescrito con drawer móvil (hamburger + backdrop + slide-in con `translate-x`). Visible <`lg:`, drawer desktop ≥`lg:`. Bloqueo de scroll del body cuando abre. Auto-cierra en navegación.
+  - `Navbar` con menú móvil (Framer `AnimatePresence`) + hamburger. Botón "Cotizar" se mueve dentro del drawer en mobile.
+  - Layout admin: `md:ml-[268px]` → `lg:ml-[268px]` + `pt-14 lg:pt-0` (no quedar bajo el topbar móvil) + padding container `px-4 sm:px-6 py-6 sm:py-10`.
+  - Landing (Hero/Features/Pricing/Presets/Anti-no-show/Footer): typography clamps escalados (`clamp(2rem,...)` en lugar de `clamp(2.4-3rem,...)`), padding/gap `sm:` ladder en cada sección, grids `sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4` donde antes saltaba directo a `lg`, botones full-width en mobile.
+  - `BookingFlow`: stepper compacto en mobile (icons sin labels hasta `md:`), DatePicker con scroll horizontal + snap, slot grid `grid-cols-2 sm:grid-cols-4 lg:grid-cols-5`.
+  - Modals (`StaffClient`, `ServicesClient`): `max-h-[92vh]` con scroll en el contenedor padre y `overflow-y-auto` en el form, padding `p-5 sm:p-8` (40px → 20px en mobile), grid de inputs `grid-cols-1 sm:grid-cols-2`.
+  - `BrandingEditor`: grid `md:grid-cols-[1fr_0.85fr] lg:grid-cols-[1.3fr_1fr]` + sticky preview activo desde `md:`. TypographyPanel `max-h-[280px] sm:max-h-[360px] md:max-h-[420px]`.
+  - `OnboardingWizard`: progress dots responsivos (`w-4 sm:w-6 md:w-10`), preview lateral visible desde `md:` (no solo `lg:`), botones de navegación stack en mobile.
+  - Tabla de comisiones (`finance/page.tsx`) ahora está en `<div className="overflow-x-auto -mx-5 sm:-mx-6">` con `min-w-[420px]`. Stats grid del dashboard `grid-cols-2 lg:grid-cols-4` (en lugar de `1 sm:2 lg:4`).
+  - `MarketingClient`: `max-h-[420px] sm:max-h-[520px]` para la lista, sticky preview solo `lg:sticky` (en mobile va abajo).
+  - Avatares barbero `w-14 h-14 sm:w-20 sm:h-20`. Headers admin `text-3xl sm:text-5xl`.
+  - Limpieza: removido `xs:` (no está definido en Tailwind 4, queda como código muerto).
+- **Prevención**:
+  - Regla — cualquier `<input type="color">` debe pasar el value por `toHexColor()` o validar que sea `#RRGGBB` antes. Convención del proyecto: `border` y `divider` se almacenan como rgba para tener alpha control en CSS, pero los pickers necesitan hex puro.
+  - Editor de identidad: el push al preview store NO debe vivir en `useEffect([draft])` — ese pattern lockea el draft viejo encima del persistido tras `router.refresh()`. Usar wrapper en `setDraft()` + `clearPreview()` explícito tras guardar.
+  - Responsive: el breakpoint primario es `sm:` (640px). Para admin sidebar usar `lg:` (1024px) — los tablets se benefician del drawer en lugar de un sidebar fijo que les robaría 268px.
+  - Tablas siempre dentro de `<div className="overflow-x-auto">` con `min-w-[Npx]` para que no comprima columnas en móvil.
+  - Modales: `<div className="fixed inset-0 ... overflow-y-auto">` (scroll en backdrop) + `<form className="max-h-[92vh] overflow-y-auto">` (scroll en form). Si el form es alto en landscape mobile, el doble overflow garantiza que se vean los botones de Guardar/Cancelar.
+
 ### [2026-05-05] Refundición del sistema de identidad — port de Lumina/Restaurante
 - **Contexto**: el editor de identidad anterior (`/admin/identity` y `OnboardingWizard`) tenía 4 presets con sólo 2 colores (`primary` + `accent`), 4 fuentes hardcoded en un `<select>`, y no había vista previa en vivo en el resto de la página. El usuario pidió portar la calidad del sistema de Lumina (Restaurante) — paletas completas, catálogo amplio de fuentes con preview real, paneles separados, live preview en todo el subtree.
 - **Error**: N/A (refactor mayor controlado, no fue bug).
@@ -501,7 +536,66 @@ Anima el grupo `.scissor` con un giro sutil al hover (apertura de tijera).
 
 > Resumen ejecutivo que se actualiza al cierre de cada tarea para que la siguiente sesión arranque con cero ramp-up.
 
-### Estado actual (al cierre del port de identidad Lumina → LUMIA — 2026-05-05 PM)
+### Estado actual (al cierre del pase responsive 100% — 2026-05-06)
+
+> Sesión 2026-05-06: dos bug-fixes del editor de identidad
+> (`commitMutationEffectsOnFiber` por rgba en `<input type="color">` +
+> "no guarda" por preview store no sincronizado) y un pase responsive
+> exhaustivo de toda la app. 32 findings auditados y arreglados. Ver §10
+> entrada del 2026-05-06 para el detalle archivo-por-archivo.
+
+#### Lo nuevo en esta sesión
+
+- **`AdminSidebar` con drawer móvil**: hamburger en topbar (`<lg:hidden`) +
+  slide-in con backdrop. El sidebar fijo queda solo en desktop (`lg:flex`).
+  Auto-cierra en navegación, bloquea scroll del body cuando abre.
+- **`Navbar` con menú móvil**: hamburger + drawer animado (Framer
+  AnimatePresence). El botón "Cotizar plan" se mueve dentro del drawer en
+  pantallas <`sm:`.
+- **Editor de identidad estable**: `toHexColor()` normaliza rgba/hex-corto/
+  hex-con-alpha → `#RRGGBB` antes del color picker. El push al preview
+  store ahora ocurre dentro de `setDraft()` (no en useEffect) — tras guardar,
+  `clearPreview()` libera el control al persistido. `dirtyRef` evita
+  pisar la edición del usuario cuando llega un nuevo `initial`.
+- **Toda la app es responsive a 360px** (mobile pequeño): landing, login,
+  pricing, /b/{slug}, BookingFlow, modales de Staff/Services, BrandingEditor,
+  OnboardingWizard, dashboard, agenda, finance (con tabla scrolleable),
+  POS, marketing, billing.
+
+#### Archivos relevantes (sesión 2026-05-06)
+
+```
+frontend/src/components/admin/BrandingEditor.tsx      ← toHexColor + draft sync
+frontend/src/components/admin/AdminSidebar.tsx        ← reescrito con drawer
+frontend/src/components/Navbar.tsx                    ← hamburger + drawer
+frontend/src/app/admin/layout.tsx                     ← lg:ml + pt-14 mobile
+frontend/src/components/admin/StaffClient.tsx         ← modal scroll + grid
+frontend/src/components/admin/ServicesClient.tsx      ← modal scroll
+frontend/src/components/admin/MarketingClient.tsx     ← lista + sticky responsive
+frontend/src/components/admin/AgendaView.tsx          ← cards md:grid-cols-2
+frontend/src/components/admin/OnboardingWizard.tsx    ← preview md+, dots
+frontend/src/components/client/BookingFlow.tsx        ← stepper + slots + datepicker
+frontend/src/components/client/TenantHero.tsx         ← typography clamp
+frontend/src/components/landing/Landing*.tsx          ← typography + grids + padding
+frontend/src/app/admin/{page,agenda,finance,pos,billing}.tsx ← typography + grids
+frontend/src/app/{login,precios}/page.tsx             ← padding + clamps
+```
+
+#### Cosas a recordar
+
+- Breakpoints en Tailwind 4: `sm:` 640, `md:` 768, `lg:` 1024, `xl:` 1280.
+  No hay `xs:` definido — si lo ves en el código es código muerto, hay que
+  removerlo.
+- AdminSidebar visible: `lg:` (1024px+). En tablet/mobile usa el drawer.
+  Por eso el `pt-14 lg:pt-0` en el `<main>` del layout admin (sin eso, el
+  contenido queda tapado por el topbar móvil).
+- `<input type="color">` siempre via `toHexColor()`. Los tokens `border` y
+  `divider` de la paleta son rgba a propósito (para alpha control), no
+  cambiar eso — el adapter sí transforma para el picker.
+
+---
+
+### Estado anterior (al cierre del port de identidad Lumina → LUMIA — 2026-05-05 PM)
 
 > Sesión 2026-05-05 PM: refundición del sistema de identidad portando la
 > lógica de Lumina (Restaurante). Suma 3 archivos nuevos + 3 reescritos +

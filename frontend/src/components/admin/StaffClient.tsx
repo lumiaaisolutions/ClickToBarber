@@ -127,15 +127,15 @@ export function StaffClient({
   }
 
   return (
-    <div className="space-y-8">
-      <header className="flex items-end justify-between gap-4">
+    <div className="space-y-6 sm:space-y-8">
+      <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
           <div className="text-[10px] tracking-imperial text-accent-3 mb-3">Personal</div>
-          <h1 className="font-display italic text-5xl text-ink leading-tight">Tus barberos</h1>
+          <h1 className="font-display italic text-3xl sm:text-5xl text-ink leading-tight">Tus barberos</h1>
           <p className="text-ink-2 text-sm mt-3">{initial.length} en activo. Cada uno con sus horarios y comisiones.</p>
         </div>
         {canWrite ? (
-          <button onClick={openCreate} className="btn btn-primary">
+          <button onClick={openCreate} className="btn btn-primary self-start sm:self-auto">
             <Plus size={14} /> Añadir barbero
           </button>
         ) : (
@@ -145,21 +145,21 @@ export function StaffClient({
 
       {error && <div className="p-3 rounded-[10px] bg-danger/8 border border-danger/30 text-danger text-sm">{error}</div>}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
         {initial.map((b) => (
-          <article key={b.id} className="card-paper p-6">
-            <div className="flex items-start gap-4">
+          <article key={b.id} className="card-paper p-4 sm:p-6">
+            <div className="flex items-start gap-3 sm:gap-4">
               {b.avatar ? (
-                <img src={b.avatar} alt={b.name} className="w-20 h-20 rounded-2xl object-cover ring-1 ring-line-strong" />
+                <img src={b.avatar} alt={b.name} className="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl object-cover ring-1 ring-line-strong shrink-0" />
               ) : (
-                <div className="w-20 h-20 rounded-2xl bg-bg-sage flex items-center justify-center text-primary font-display italic text-2xl">
+                <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl bg-bg-sage flex items-center justify-center text-primary font-display italic text-xl sm:text-2xl shrink-0">
                   {b.name.charAt(0)}
                 </div>
               )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h2 className="font-display italic text-2xl text-ink">{b.name}</h2>
+                  <div className="min-w-0">
+                    <h2 className="font-display italic text-lg sm:text-2xl text-ink truncate">{b.name}</h2>
                     <div className="flex flex-wrap gap-1.5 mt-2">
                       {b.specialties.map((s) => (
                         <span key={s} className="text-[10px] tracking-imperial px-2 py-0.5 rounded-full bg-bg-vellum border border-line-medium text-ink-2">{s}</span>
@@ -168,18 +168,18 @@ export function StaffClient({
                   </div>
                   <div className="text-right shrink-0">
                     <div className="text-[10px] tracking-imperial text-ink-muted">Comisión</div>
-                    <div className="font-display italic text-3xl text-primary tabular-nums">{b.commission_pct}%</div>
+                    <div className="font-display italic text-2xl sm:text-3xl text-primary tabular-nums">{b.commission_pct}%</div>
                   </div>
                 </div>
-                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-2">
-                  {b.email && <span className="inline-flex items-center gap-1"><Mail size={11} /> {b.email}</span>}
+                <div className="mt-3 flex flex-wrap gap-x-3 sm:gap-x-4 gap-y-1 text-[11px] sm:text-xs text-ink-2 break-all sm:break-normal">
+                  {b.email && <span className="inline-flex items-center gap-1 min-w-0"><Mail size={11} className="shrink-0" /> <span className="truncate">{b.email}</span></span>}
                   {b.phone && <span className="inline-flex items-center gap-1"><Phone size={11} /> {b.phone}</span>}
                   <span className="inline-flex items-center gap-1"><Scissors size={11} /> {b.services_count} servicios</span>
                 </div>
               </div>
             </div>
 
-            <hr className="hairline-gold my-5" />
+            <hr className="hairline-gold my-4 sm:my-5" />
 
             <div>
               <div className="text-[10px] tracking-imperial text-ink-muted mb-3">Horario semanal</div>
@@ -187,10 +187,10 @@ export function StaffClient({
                 {WEEKDAYS_ES.map((d, i) => {
                   const shift = b.shifts.find((s) => s.weekday === i);
                   return (
-                    <div key={d} className="text-center p-2 rounded-[8px] border border-line-fine text-[11px]">
+                    <div key={d} className="text-center p-1 sm:p-2 rounded-[8px] border border-line-fine text-[10px] sm:text-[11px]">
                       <div className="text-[9px] tracking-imperial text-ink-muted">{d}</div>
-                      <div className="font-mono text-ink mt-1">{shift ? shift.start.slice(0,5) : "—"}</div>
-                      <div className="font-mono text-ink-2 text-[10px]">{shift ? shift.end.slice(0,5) : ""}</div>
+                      <div className="font-mono text-ink mt-1 text-[10px] sm:text-[11px]">{shift ? shift.start.slice(0,5) : "—"}</div>
+                      <div className="font-mono text-ink-2 text-[9px] sm:text-[10px]">{shift ? shift.end.slice(0,5) : ""}</div>
                     </div>
                   );
                 })}
@@ -247,21 +247,21 @@ function BarberFormModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-ink/40 backdrop-blur-sm" onClick={onCancel}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:px-4 sm:py-6 bg-ink/40 backdrop-blur-sm overflow-y-auto" onClick={onCancel}>
       <form
         onClick={(e) => e.stopPropagation()}
         onSubmit={(e) => { e.preventDefault(); onSubmit(form); }}
-        className="card-paper w-full max-w-2xl max-h-[88vh] overflow-y-auto p-8"
+        className="card-paper w-full max-w-2xl max-h-[92vh] overflow-y-auto p-5 sm:p-8 my-auto"
       >
-        <header className="flex items-start justify-between mb-7">
-          <div>
+        <header className="flex items-start justify-between mb-5 sm:mb-7 gap-3">
+          <div className="min-w-0">
             <div className="text-[10px] tracking-imperial text-accent-3 mb-1">{initial ? "Editar" : "Nuevo"}</div>
-            <h2 className="font-display italic text-3xl text-ink">{initial ? initial.name : "Nuevo barbero"}</h2>
+            <h2 className="font-display italic text-2xl sm:text-3xl text-ink truncate">{initial ? initial.name : "Nuevo barbero"}</h2>
           </div>
-          <button type="button" onClick={onCancel} className="text-ink-muted hover:text-ink p-1"><X size={18} /></button>
+          <button type="button" onClick={onCancel} className="text-ink-muted hover:text-ink p-1 shrink-0"><X size={18} /></button>
         </header>
 
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Nombre">
             <input className="input-boxed" value={form.name} onChange={(e) => update("name", e.target.value)} required />
           </Field>
@@ -350,24 +350,24 @@ function BarberMyView({ barber }: { barber: Barber }) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <header>
         <div className="text-[10px] tracking-imperial text-accent-3 mb-3">Mis horarios</div>
-        <h1 className="font-display italic text-5xl text-ink leading-tight">{barber.name}</h1>
+        <h1 className="font-display italic text-3xl sm:text-5xl text-ink leading-tight">{barber.name}</h1>
         <p className="text-ink-2 text-sm mt-3">
           Esto es lo que verán tus clientes al elegirte. Vacío = no trabajas ese día.
         </p>
       </header>
 
-      <div className="card-paper p-7">
-        <div className="grid grid-cols-1 sm:grid-cols-7 gap-3">
+      <div className="card-paper p-4 sm:p-7">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
           {WEEKDAYS_ES.map((d, weekday) => {
             const s = shifts[weekday];
             return (
               <div key={d} className="space-y-2">
                 <div className="text-[10px] tracking-imperial text-ink-muted text-center">{d}</div>
-                <input type="time" value={s.start} onChange={(e) => setShift(weekday, "start", e.target.value)} className="input-boxed font-mono text-xs text-center" />
-                <input type="time" value={s.end} onChange={(e) => setShift(weekday, "end", e.target.value)} className="input-boxed font-mono text-xs text-center" />
+                <input type="time" value={s.start} onChange={(e) => setShift(weekday, "start", e.target.value)} className="input-boxed font-mono text-xs text-center w-full" />
+                <input type="time" value={s.end} onChange={(e) => setShift(weekday, "end", e.target.value)} className="input-boxed font-mono text-xs text-center w-full" />
               </div>
             );
           })}
