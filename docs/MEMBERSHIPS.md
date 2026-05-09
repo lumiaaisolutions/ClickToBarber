@@ -47,10 +47,24 @@ client_memberships           -- suscripciones activas
 - **Mes con 5 fines de semana**: el plan da N servicios sin importar el
   número de semanas — periodo natural mensual.
 
+## Endpoints públicos (cliente final)
+
+Auth con el mismo `token` magic-link emitido por `ClientPortalController`.
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| POST | `/api/public/me/memberships` | planes activos del tenant + membership actual |
+| POST | `/api/public/me/memberships/checkout` | inicia Stripe Checkout subscription |
+
+Mock driver crea `ClientMembership` inmediatamente; Stripe real lo crea
+cuando llega `checkout.session.completed` con
+`metadata.purpose=membership_subscription` (handler
+`materializeMembershipFromSession`).
+
 ## Estado
 
 ✅ Migración + modelos.
-🔴 UI admin (`/admin/memberships`).
-🔴 UI cliente (en `/me`).
-🔴 Wiring con BookAppointment para descontar servicio.
-🔴 Stripe webhook `invoice.paid` que resetea contador.
+✅ UI admin (`/admin/memberships`).
+✅ UI cliente (`MembershipsSection` en `/me`).
+✅ Wiring con `BookAppointment` (`deposit_status='covered'`).
+✅ Stripe webhook `invoice.paid` resetea contador.

@@ -227,3 +227,75 @@ del cierre y dispatching post-commit gateado por
 - **E. PWA + push + ratings**: manifest + service worker con cache strategies, suscripción Web Push (envío VAPID pendiente), ratings post-visita con token único de un solo uso, política "4★+ se publica".
 - **F. Responsive audit**: convenciones documentadas en `docs/RESPONSIVE.md`.
 - **G. Docs distribuidas**: 1 `.md` por feature en `docs/`, `CLAUDE.md` compactado a referencia + estado vivo.
+
+### [2026-05-08] Cierre completo del roadmap I1-I10 + quick wins
+
+Sesión final que cierra todo el código pendiente del roadmap a producción.
+**Commit**: `ce09af0`. Tests **88 passed / 3 skipped** (sin regresiones).
+
+**UI faltante**:
+- I1 `/admin/cash-close` con preview, varianza en vivo, reconciliación.
+- I2 + I8 `AgendaCalendar` (vista semanal + día) con drag-drop reschedule,
+  optimistic update y rollback diferenciado por 409/422/403.
+  Decisión: una sola vista que cubre I8 (semanal) y I2 (DnD) en un solo
+  componente — más simple que dos componentes separados.
+
+**Compra pública / portal cliente**:
+- I3 `/b/{slug}/gift` checkout con presets + custom amount + email al
+  destinatario. Decisión: dual driver — mock crea GiftCard inmediato,
+  Stripe real espera al webhook `materializeGiftCardFromSession` para
+  evitar gift cards "fantasma" por checkouts abandonados.
+- I4 `MembershipsSection` en `/me` autenticada con el mismo magic-link
+  `client_portal` (TTL 30 min, no se marca `used_at` en consume).
+
+**Affiliates self-service**:
+- I5 `/affiliates` con login por código (persistido en localStorage) + 
+  `/affiliates/signup`. Decisión: usar el `code AFF-XXXXXX` como token
+  long-lived (~10^14 combinaciones, MVP-grade). Magic-link queda como
+  TODO si llega volumen real.
+- I6 Stripe Connect Express + payout automático en
+  `lumia:pay-affiliate-commissions`. Affiliates sin Connect activo
+  acumulan deuda en `total_commission_paid_cents` para pago manual.
+
+**CFDI 4.0 MX**:
+- I7 `CfdiXmlBuilder` (DOM 4.0 + IVA 16%) + `CfdiSealer` (RSA-SHA256
+  con CSD) + `FinkokCfdiPac` (SOAP + parse UUID + persistencia).
+  Decisión: cadena original generada linealmente (sin XSLT SAT). Esto
+  funciona con Finkok dev/sandbox; para PAC estrictos hay que
+  bundlear `cadenaoriginal_4_0.xslt` y aplicar con `php-xsl`.
+
+**Anti no-show**:
+- `TwilioVoiceClient` real (POST `/Calls.json` con TwiML inline + 
+  Polly.Mia es-MX) + `PlaceVoiceCall` con CircuitBreaker. Cableado al
+  fallback T-1h en `AutoCancelUnconfirmedAppointment`, gateado por
+  `TWILIO_DRIVER=twilio`.
+
+**UX + i18n**:
+- I10 `OnboardingTour` con spotlight via `box-shadow: 0 0 0 9999px` +
+  tooltip animado Framer Motion. 5 pasos. `localStorage.lumia_tour_v1_done`
+  evita re-mostrar; botón "Ver tour" + event `lumia:tour:open` reabre.
+- I9 i18n custom (sin paquete externo) con `lib/i18n/dict.ts` +
+  cookie `lumia_locale`. Footer landing como muestra; admin queda en ES.
+
+**Quick wins**:
+- Bundle analyzer opcional + `scripts/check-bundle-budget.mjs` (200/220/250KB).
+- Renovate `automergeType: branch` para patches/pins/types.
+- `lumia:health-poll` cron 1-min con alerta Slack tras 3 fallos.
+- `<Analytics />` con PostHog/GA gateado por `consent.analytics`.
+
+**Decisión de commit**: 1 commit grande (`ce09af0`) con TODO el código
+pendiente del roadmap. La razón es que la mayoría de archivos vienen
+de sesiones previas Z-EE/R-Y/H-Q/A-G que nunca se commitearon —
+fragmentar a posteriori no aporta valor.
+
+**Nuevos docs**:
+- `docs/CFDI.md` (driver Finkok + setup CSD + flujo emisión).
+- `docs/TWILIO_VOICE.md` (fallback no-show + TwiML inline).
+- `docs/ONBOARDING_TOUR.md` (5 pasos + cómo extender).
+- `docs/I18N.md` actualizado con scaffold real.
+- `docs/AFFILIATES.md`, `docs/GIFT_CARDS.md`, `docs/MEMBERSHIPS.md`
+  actualizados a estado ✅ + endpoints reales.
+
+**Pendiente operacional únicamente** (no es código): Op-1 a Op-6
+(Postgres, secrets, Meta WhatsApp templates, cron, DNS, Sentry).
+Ver `docs/PRODUCTION_READINESS.md`.

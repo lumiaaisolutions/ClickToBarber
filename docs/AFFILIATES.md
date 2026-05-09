@@ -22,26 +22,41 @@ affiliate_referrals
 
 ## Flujo
 
-1. Persona se registra como afiliada (futuro `/affiliates/signup`):
-   email + nombre → `Affiliate` con `code` único.
+1. Persona se registra en `/affiliates/signup` (form: nombre + email)
+   → `Affiliate` con `code` único `AFF-XXXXXX` + email con el código.
 2. Comparte link `https://lumia.app/?aff=AFF-ABC123`.
 3. Cuando un nuevo tenant se registra con ese parámetro, en
-   `ProvisionTenant` se busca el affiliate y se crea `affiliate_referrals`
-   con `mrr_cents_at_signup = plan.price_cents`.
-4. Cada mes, después de la `invoice.paid` del tenant, un job aparte
-   calcula la comisión: `mrr × affiliate.commission_pct / 100` y la
-   acumula en `total_commission_paid_cents`. Pago real al affiliate vía
-   Stripe Connect / transferencia mensual (operación humana hasta tener
-   volumen).
-5. Tras 12 meses, deja de generar comisión (sólo primer año).
+   `ProvisionTenantWithTrial` se busca el affiliate y se crea
+   `affiliate_referrals` con `mrr_cents_at_signup = plan.price_cents`.
+4. El affiliate entra a `/affiliates`, mete su código (persistido en
+   `localStorage`), ve KPIs (referidos, MRR, comisión pagada) + tabla.
+5. Click en "Conectar Stripe" → onboarding Express hospedado por
+   Stripe → al volver, `stripe_payouts_enabled = true`.
+6. Cada mes (1er día), `lumia:pay-affiliate-commissions` corre y para
+   cada referral activo calcula `mrr × commission_pct / 100`:
+   - Affiliate con Connect activo → `Transfer` automático y
+     `last_paid_at = now()`.
+   - Affiliate sin Connect → acumula en
+     `total_commission_paid_cents` para pago manual posterior.
+7. Tras 12 meses, deja de generar comisión (sólo primer año).
+
+## Endpoints públicos
+
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| POST | `/api/public/affiliates/signup` | none (throttle:login) | crea o reutiliza affiliate, envía código por email |
+| POST | `/api/public/affiliates/dashboard` | code | KPIs + tabla de referidos + share_url |
+| POST | `/api/public/affiliates/connect/start` | code | devuelve URL de onboarding Stripe Express |
+| POST | `/api/public/affiliates/connect/refresh` | code | re-lee `payouts_enabled` desde Stripe |
 
 ## Estado
 
-✅ Migración + modelo `Affiliate`.
-🔴 Captura `?aff=` en flujo de signup público.
-🔴 UI dashboard del affiliate (link único, comisiones acumuladas).
-🔴 Cron mensual de cálculo de comisiones.
-🔴 Pago real (Stripe Connect Express).
+✅ Migración + modelo `Affiliate` (+ `stripe_account_id`,
+   `stripe_payouts_enabled`, `last_paid_at`).
+✅ Captura `?aff=` en signup público.
+✅ Frontend `/affiliates` + `/affiliates/signup`.
+✅ Cron mensual `lumia:pay-affiliate-commissions`.
+✅ Pago vía Stripe Connect Express (mock + real).
 
 ## Por qué primer año solo
 

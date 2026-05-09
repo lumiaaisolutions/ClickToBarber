@@ -31,6 +31,10 @@
 | `STATUS_PAGE.md` | Plantilla pública de estado |
 | `WALK_IN_QUEUE.md` | Fila virtual sin cita previa |
 | `RUNBOOK.md` | Diagnóstico de incidentes |
+| `CFDI.md` | Facturación electrónica MX vía Finkok |
+| `TWILIO_VOICE.md` | Llamada saliente fallback no-show |
+| `ONBOARDING_TOUR.md` | Tour guiado primer login |
+| `I18N.md` | Internacionalización ES/EN |
 | `openapi.yaml` | Spec OpenAPI 3.1 de la public API |
 
 ## Núcleo multi-tenant
@@ -61,7 +65,7 @@
 | Módulo | Estado | Backend | Doc |
 |--------|--------|---------|-----|
 | WhatsApp Cloud API | 🟡 cliente real listo, plantillas pendientes Meta | `app/Infrastructure/Integrations/MetaWhatsapp/MetaWhatsappClient.php` | `PRODUCTION_READINESS.md` §B3 |
-| Twilio Voice | 🔴 stub | — | `PRODUCTION_READINESS.md` §I (no en bloqueantes ya) |
+| Twilio Voice | 🟡 cliente real, falta `TWILIO_DRIVER=twilio` + creds | `app/Infrastructure/Integrations/Twilio/TwilioVoiceClient.php` | `TWILIO_VOICE.md` |
 | Web Push (PWA) | 🟡 manifest + sw + suscripciones; envío VAPID pendiente | `PushSubscriptionController` | `PWA_PUSH.md` |
 | Email transaccional | 🟡 mailable listo, driver `log` por defecto | `app/Mail/OnboardingMagicLink.php` | — |
 
@@ -83,6 +87,8 @@
 | Webhooks Stripe (HMAC + idempotencia) | ✅ | `StripeWebhookController` | — | — |
 | Dunning grace period | ✅ | `php artisan lumia:enforce-dunning` | — | — |
 | MercadoPago | 🔴 stub | — | — |
+| Stripe Connect Express (affiliates) | 🟡 código + mock listo, falta keys live | `app/Domain/Affiliates/Services/StripeConnectService.php` | — | `AFFILIATES.md` |
+| CFDI 4.0 MX (Finkok) | 🟡 código listo, falta CSD + creds Finkok | `app/Infrastructure/Integrations/Cfdi/*` | `CfdiController` | `CFDI.md` |
 
 ## Integraciones
 
@@ -122,22 +128,32 @@
 | `.env.example` documentado | ✅ | `backend/.env.example`, `frontend/.env.local.example` | `SECRETS_RUNBOOK.md` |
 | PWA install + service worker | ✅ | `frontend/public/sw.js`, `frontend/src/app/manifest.ts` | `PWA_PUSH.md` |
 
+## UX y observabilidad transversal
+
+| Módulo | Estado | Path | Doc |
+|--------|--------|------|-----|
+| Cookie consent banner granular | ✅ | `frontend/src/components/CookieConsentBanner.tsx` | — |
+| GA + PostHog gateado por consent | ✅ | `frontend/src/components/Analytics.tsx` | — |
+| Bundle analyzer + budget script | ✅ | `frontend/scripts/check-bundle-budget.mjs` | — |
+| Renovate auto-merge patches | ✅ | `.github/renovate.json` | — |
+| `/up/deep` + Slack alert 3-fail | ✅ | `lumia:health-poll` cron | — |
+| LocaleSwitcher ES/EN | ✅ scaffold | `frontend/src/components/LocaleSwitcher.tsx` | `I18N.md` |
+| Onboarding tour 5 pasos | ✅ | `frontend/src/components/admin/OnboardingTour.tsx` | `ONBOARDING_TOUR.md` |
+
 ## Roadmap futuro
 
 Las recomendaciones que NO se implementaron y se dejan documentadas
 para iteraciones futuras:
 
-- **Walk-in queue** (cliente sin cita escanea QR, se mete a cola virtual).
-- **Galería antes/después** por barbero con consentimiento expreso.
-- **Smart scheduling** (ML simple sugiere horarios con huecos).
-- **CFDI 4.0** (facturación electrónica México vía Finkok/PAC).
-- **Tip splitting** automático.
-- **Stock predictivo** del POS.
 - **App móvil del barbero** (React Native o Capacitor).
 - **Marketplace de plugins** (Zapier-like, Mailchimp, Hubspot, Quickbooks).
 - **SOC2 prep / pen test profesional**.
 - **Bug bounty program** cuando haya prod traffic.
 - **Storybook** de componentes UI premium.
 - **OpenAPI auto-generado** con Scribe.
-- **Renovate / Dependabot** + auto-merge de patches.
-- **Bundle analyzer en CI** que falle si admin > 200 KB gzipped.
+- **Chat en vivo** cliente↔barbería (Reverb).
+- **AI assistant** WhatsApp.
+- **ML real** para no-show prediction (hoy regla simple).
+- **i18n admin completo** (~200 strings adicionales) + routing `/en/*`.
+- **CFDI XSLT oficial SAT** bundlado (cadenaoriginal_4_0.xslt).
+- **PDF del CFDI** generado a partir del XML sellado (dompdf/mPDF).

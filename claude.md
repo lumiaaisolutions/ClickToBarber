@@ -133,7 +133,9 @@ Cliente califica 1-5★. Sólo 4★+ se publica en `/b/<slug>`. Detalle en
 - Registro automático de cada cobro (servicio, producto, depósito, propina).
 - Cierre de caja diario por barbero (efectivo vs digital).
 - Cálculo de comisiones por barbero con regla configurable.
-- Exportación contable (CSV, PDF). CFDI 4.0 pendiente.
+- Exportación contable (CSV, PDF).
+- CFDI 4.0 MX vía Finkok (`docs/CFDI.md`). Falta sólo `CSD` + creds en
+  el gestor de secrets para ir live.
 
 ### POS e inventario
 
@@ -313,9 +315,72 @@ Bundle analyzer en CI debería bloquear merges que rompan la cota
 > incidentes y decisiones ver `docs/SESSION_LOG.md`. Para puntos
 > pendientes ver `docs/PRODUCTION_READINESS.md`.
 
-### Última sesión: 2026-05-07 — Bloques Z-EE (todo lo restante implementado)
+### Última sesión: 2026-05-08 — Cierre completo I1-I10 + quick wins
 
-6 mega-bloques finales sobre la base. Estado tras esta sesión:
+**Commit**: `ce09af0` (`feat(platform): cierre completo de production
+readiness — bloques A-EE + I1-I10`). Pushed a `origin/main`.
+
+Todo el código pendiente del roadmap está cerrado. Lo único que falta
+para producción es **operacional** (no código): ver `docs/PRODUCTION_READINESS.md`
+secciones Op-1 a Op-6.
+
+**Cambios principales** (detalle archivo-por-archivo en `docs/SESSION_LOG.md`):
+
+- **I1, I2, I8** UI faltante: `/admin/cash-close` (preview + varianza
+  + reconciliación) y `AgendaCalendar` (vista semanal + día con
+  drag-drop reschedule, optimistic update + rollback diferenciado por
+  409/422/403).
+- **I3, I4, I5** Compra pública / portales:
+  - `/b/{slug}/gift` checkout con presets + custom + email; success
+    page con código + valor + vencimiento.
+  - `MembershipsSection` en `/me` autenticado con magic-link.
+  - `/affiliates` + `/affiliates/signup` self-service con código
+    `AFF-XXXXXX` como token long-lived.
+- **I6** Stripe Connect Express para affiliates (onboarding + transfer
+  automático en `lumia:pay-affiliate-commissions`).
+- **I7** CFDI 4.0 MX vía Finkok: `CfdiXmlBuilder` + `CfdiSealer`
+  (RSA-SHA256 con CSD) + SOAP real. Endpoints `/api/admin/cfdi[/...]`.
+- **I9** i18n scaffold (sin paquete externo, custom): `lib/i18n/dict.ts`
+  + `LocaleSwitcher` + cookie `lumia_locale`. Footer landing como muestra.
+- **I10** `OnboardingTour` con spotlight + 5 pasos. Se dispara para
+  `first_login_at != null`. Botón "Ver tour" en sidebar (event
+  `lumia:tour:open`).
+- **Twilio Voice** real: `TwilioVoiceClient` (TwiML inline + Polly.Mia
+  es-MX) + `PlaceVoiceCall` con CircuitBreaker. Cableado al fallback
+  no-show T-1h cuando `TWILIO_DRIVER=twilio`.
+- **Quick wins**:
+  - Bundle analyzer (`ANALYZE=1`) + `scripts/check-bundle-budget.mjs`.
+  - Renovate auto-merge de patches/pins/types.
+  - `lumia:health-poll` cron con alerta Slack tras 3 fallos.
+  - `<Analytics />` PostHog/GA gateado por consent.
+
+**Tests**: 88 passed / 3 skipped (sin regresiones).
+
+**Verificación E2E**: gift card checkout, affiliate dashboard,
+membership flow, reschedule drag-drop, cash-close preview, health-poll,
+i18n round-trip ES↔EN — todos OK.
+
+**Migración nueva aplicada**: `2026_05_08_000001_add_stripe_account_to_affiliates`.
+
+**Nuevos docs**: `CFDI.md`, `TWILIO_VOICE.md`, `ONBOARDING_TOUR.md`.
+Actualizados: `AFFILIATES.md`, `GIFT_CARDS.md`, `MEMBERSHIPS.md`,
+`I18N.md`, `FEATURES.md`, `PRODUCTION_READINESS.md`.
+
+**Cómo retomar la próxima sesión**:
+1. `git pull` (estamos en `ce09af0` o más reciente).
+2. Backend + frontend: `php artisan serve` y `npm run dev` desligados.
+3. `php artisan migrate` por si hay nueva migración pendiente.
+4. Login con `admin@elnavajazo.test / password` y verifica que el tour
+   no se dispara (debería estar marcado como visto en localStorage de
+   tu navegador).
+5. Decidir el siguiente bloque: probablemente **Op-1 a Op-6**
+   (operacional, no código) o alguna de las **mejoras opcionales** que
+   quedaron documentadas (CFDI XSLT oficial, PDF del CFDI, i18n admin
+   completo, magic-link auth para affiliates).
+
+### Sesión anterior: 2026-05-07 — Bloques Z-EE (todo lo restante implementado)
+
+6 mega-bloques finales sobre la base. Estado tras esa sesión:
 
 - **Z. UIs admin pendientes**: POS ticketing completo (`/admin/pos/checkout`)
   con servicios+productos+cupón+gift card+propina, `/admin/cash-close`

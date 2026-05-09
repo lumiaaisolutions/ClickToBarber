@@ -46,10 +46,27 @@ En el POS:
 - `expires_at` evita gift cards "infinitas".
 - Audit log registra cada canje (admin que aplicó + ticket).
 
+## Endpoints públicos
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| POST | `/api/public/giftcards/{slug}/checkout` | crea sesión + (mock) GiftCard inmediato + email |
+| GET  | `/api/public/giftcards/{slug}/{code}` | lookup público para success page |
+
+## Branching driver
+
+- **Mock** (`STRIPE_DRIVER=mock`): crea la GiftCard inmediatamente con
+  balance completo y manda el email — útil para dev/demo sin keys reales.
+- **Stripe real**: arma `checkout.sessions` modo `payment` con
+  `metadata.purpose=gift_card`. El webhook
+  `materializeGiftCardFromSession` crea la GiftCard + email **sólo
+  cuando llega `checkout.session.completed`** (evita gift cards "fantasma"
+  por checkouts abandonados).
+
 ## Estado
 
 ✅ Migración + modelo `GiftCard` con `redeem()` atómico.
-🔴 UI compra (cliente público).
-🔴 UI canje en POS.
-🔴 Stripe Checkout en modo `payment` para one-time.
-🔴 Email transactional al destinatario.
+✅ UI compra `/b/{slug}/gift` + success `/b/{slug}/gift/success`.
+✅ UI canje en POS (`/admin/pos/checkout`).
+✅ Stripe Checkout `payment` + webhook `materializeGiftCardFromSession`.
+✅ Email transactional via `Mail::raw` (en prod conviene Mailable dedicado).
