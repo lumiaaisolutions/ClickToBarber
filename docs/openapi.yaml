@@ -1,0 +1,178 @@
+openapi: 3.1.0
+info:
+  title: LUMIA API
+  version: 1.0.0
+  description: |
+    API pública de LUMIA para tenants Enterprise. Todas las rutas
+    requieren `Authorization: Bearer lk_<your_api_key>` excepto los
+    endpoints públicos del booking flow.
+
+    Para endpoints administrativos (tenants individuales), usa Sanctum
+    Bearer tokens del portal admin (no documentado aquí).
+  contact:
+    email: api@lumiaaisolutions.com
+servers:
+  - url: https://api.lumia.app
+    description: Producción
+  - url: http://localhost:8000
+    description: Local
+
+security:
+  - apiKey: []
+
+paths:
+  /api/v1/me:
+    get:
+      summary: Información del tenant del API key
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tenant:
+                    $ref: "#/components/schemas/Tenant"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/v1/appointments:
+    get:
+      summary: Lista las últimas 100 citas del tenant
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Appointment"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+
+  /api/client/availability:
+    get:
+      summary: Slots disponibles para un barbero/servicio/fecha
+      parameters:
+        - in: query
+          name: barber_id
+          schema: { type: integer }
+          required: true
+        - in: query
+          name: service_id
+          schema: { type: integer }
+          required: true
+        - in: query
+          name: date
+          schema: { type: string, format: date }
+          required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    starts_at: { type: string, format: date-time }
+                    ends_at:   { type: string, format: date-time }
+                    available: { type: boolean }
+
+  /api/client/appointments:
+    post:
+      summary: Crear cita pública
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [barber_id, service_id, starts_at, client_name, client_email, client_phone]
+              properties:
+                barber_id:    { type: integer }
+                service_id:   { type: integer }
+                starts_at:    { type: string, format: date-time }
+                client_name:  { type: string, maxLength: 120 }
+                client_email: { type: string, format: email }
+                client_phone: { type: string, minLength: 8 }
+                notes:        { type: string, nullable: true, maxLength: 500 }
+                referral_code: { type: string, nullable: true }
+      responses:
+        "201":
+          description: Cita creada
+        "409":
+          description: Slot ya tomado
+        "422":
+          description: Validación
+
+components:
+  securitySchemes:
+    apiKey:
+      type: http
+      scheme: bearer
+      bearerFormat: lk_<token>
+
+  schemas:
+    Tenant:
+      type: object
+      properties:
+        id:   { type: string, format: uuid }
+        slug: { type: string }
+        name: { type: string }
+
+    Appointment:
+      type: object
+      properties:
+        id:            { type: integer }
+        starts_at:     { type: string, format: date-time }
+        ends_at:       { type: string, format: date-time }
+        status:        { type: string, enum: [pending_confirmation, confirmed, in_progress, completed, cancelled, no_show] }
+        price_cents:   { type: integer }
+        deposit_cents: { type: integer }
+
+  responses:
+    Unauthorized:
+      description: API key inválida o ausente
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error: { type: string, example: "invalid_api_key" }
+
+    InsufficientScope:
+      description: La key no tiene el scope requerido
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:    { type: string, example: "insufficient_scope" }
+              required: { type: string, example: "appointments:read" }
+
+  webhooks:
+    AppointmentBooked:
+      post:
+        summary: Cita creada (webhook saliente)
+        description: |
+          Disparado cuando un cliente reserva una cita. El header
+          `X-Lumia-Signature` contiene `sha256=<hex(HMAC_SHA256(body, secret))>`.
+        requestBody:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type: { type: string, example: "appointment.booked" }
+                  tenant_id: { type: string, format: uuid }
+                  data:
+                    type: object
+                    properties:
+                      appointment_id: { type: integer }
+                      starts_at: { type: string, format: date-time }
+        responses:
+          "200":
+            description: ACK del receptor

@@ -20,7 +20,7 @@ class Ticket extends Model
     protected $fillable = [
         'tenant_id', 'appointment_id', 'barber_id', 'client_id',
         'subtotal_cents', 'tip_cents', 'discount_cents', 'total_cents',
-        'payment_method', 'status', 'closed_at',
+        'payment_method', 'coupon_id', 'status', 'closed_at',
     ];
 
     protected $casts = [

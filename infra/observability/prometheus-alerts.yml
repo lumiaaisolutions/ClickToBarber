@@ -1,0 +1,47 @@
+# Alert rules de Prometheus para LUMIA.
+# Cargar con: prometheus --config.file=prometheus.yml --rule-files=infra/observability/prometheus-alerts.yml
+groups:
+  - name: lumia-api
+    interval: 30s
+    rules:
+
+      - alert: WebhookFailureBurst
+        expr: increase(lumia_webhook_events_total{status="failed"}[5m]) > 10
+        for: 5m
+        labels:
+          severity: page
+        annotations:
+          summary: "Webhooks fallidos > 10 en 5 min ({{ $labels.provider }})"
+          runbook: "https://docs.lumia.app/runbooks/webhook-failures"
+
+      - alert: HighErrorRate
+        expr: sum(rate(http_server_errors_total[5m])) / sum(rate(http_server_requests_total[5m])) > 0.01
+        for: 10m
+        labels:
+          severity: page
+        annotations:
+          summary: "Tasa de 5xx > 1% por 10 min en /api/*"
+
+      - alert: SlowAvailabilityP95
+        expr: histogram_quantile(0.95, rate(lumia_availability_seconds_bucket[5m])) > 0.8
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "P95 de /availability > 800ms"
+
+      - alert: SubscriptionsPastDueGrowth
+        expr: increase(lumia_subscriptions_total{status="past_due"}[1h]) > 5
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Suscripciones past_due crecen rápido — revisar Stripe / dunning"
+
+      - alert: CircuitBreakerOpen
+        expr: lumia_circuit_breaker_state{state="open"} > 0
+        for: 5m
+        labels:
+          severity: page
+        annotations:
+          summary: "Circuit breaker abierto > 5 min ({{ $labels.integration }})"

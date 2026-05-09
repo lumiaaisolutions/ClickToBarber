@@ -31,9 +31,21 @@ export async function getServicesAdmin() {
 }
 
 export async function getProductsAdmin() {
-  return api<Array<{ id: number; name: string; sku: string | null; price_cents: number; currency: string; stock: number; stock_min: number; low_stock: boolean; is_active: boolean }>>(
+  return api<Array<{ id: number; name: string; sku: string; description: string | null; price_cents: number; cost_cents: number | null; currency: string; stock: number; stock_min: number; low_stock: boolean; is_active: boolean }>>(
     "/admin/catalog/products", authed,
   );
+}
+
+export async function getMe() {
+  return api<{
+    user: {
+      id: number; name: string; email: string; role: string;
+      first_login_at: string | null;
+      can_write: boolean;
+      can_see_finance: boolean;
+    };
+    tenant: { id: string; slug: string; name: string; plan: number } | null;
+  }>("/auth/me", authed);
 }
 
 export async function getInactive() {

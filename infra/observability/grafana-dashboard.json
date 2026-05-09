@@ -1,0 +1,54 @@
+{
+  "title": "LUMIA · Operations",
+  "uid": "lumia-ops",
+  "timezone": "America/Mexico_City",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Tenants activos",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+      "targets": [{ "expr": "lumia_tenants_total" }]
+    },
+    {
+      "id": 2,
+      "title": "Citas por estado (24h)",
+      "type": "piechart",
+      "gridPos": { "x": 4, "y": 0, "w": 8, "h": 8 },
+      "targets": [{ "expr": "lumia_appointments_total" }]
+    },
+    {
+      "id": 3,
+      "title": "Webhooks recibidos por proveedor",
+      "type": "barchart",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "targets": [{ "expr": "sum by (provider) (lumia_webhook_events_total)" }]
+    },
+    {
+      "id": 4,
+      "title": "Suscripciones por estado",
+      "type": "barchart",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 6 },
+      "targets": [{ "expr": "lumia_subscriptions_total" }]
+    },
+    {
+      "id": 5,
+      "title": "Errores 5xx por endpoint (rate 5m)",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 6 },
+      "targets": [{ "expr": "sum by (route) (rate(http_server_errors_total[5m]))" }]
+    },
+    {
+      "id": 6,
+      "title": "p95 /availability",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 14, "w": 12, "h": 6 },
+      "targets": [{
+        "expr": "histogram_quantile(0.95, rate(lumia_availability_seconds_bucket[5m]))"
+      }]
+    }
+  ]
+}

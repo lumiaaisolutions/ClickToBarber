@@ -12,8 +12,9 @@ final readonly class BookAppointmentInput
         public int $serviceId,
         public string $clientName,
         public string $clientEmail,
-        public string $clientPhone,
-        public string $startsAt,         // ISO 8601
+        public ?string $clientPhone = null,
+        public string $startsAt = '',         // ISO 8601
         public ?string $notes = null,
+        public ?string $referralCode = null,  // ?ref= capturado del booking flow
     ) {}
 }

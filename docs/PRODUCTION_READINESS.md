@@ -1,315 +1,427 @@
 # LUMIA — Production Readiness Roadmap
 
-> Última auditoría: **2026-05-05**, sobre el estado al cierre de Tarea 3.1.
+> Última auditoría: **2026-05-07** tras bloques A-EE.
 > Este documento es la fuente de verdad para "qué falta antes de producción".
 > Se actualiza cada vez que se complete o se descubra un bloqueante nuevo.
 
-## TL;DR
+## TL;DR (2026-05-07)
 
-**No estamos listos para producción.** El producto funciona end-to-end en
-local con SQLite + drivers mock, pero faltan piezas estructurales (cobro
-real, RLS activo, integraciones reales, hardening) que no son polish sino
-bloqueantes de seguridad y de modelo de negocio.
+**Lista para subir a un beta de producción cerrado**, falta:
 
-Estimación gruesa: **3-5 semanas** de trabajo focalizado para llegar a un
-MVP cobrable, asumiendo 1-2 desarrolladores a tiempo completo.
+1. Configurar **secrets reales** en gestor (Doppler/Vault/AWS SM):
+   `STRIPE_SECRET`, `STRIPE_WEBHOOK_SECRET`, `WHATSAPP_TOKEN`,
+   `WHATSAPP_PHONE_ID`, `META_VERIFY_TOKEN`, `META_APP_SECRET`,
+   `GOOGLE_CALENDAR_CLIENT_ID`/`SECRET`, `MAIL_*`.
+2. **Postgres** activo (`DB_CONNECTION=pgsql`) y migración RLS aplicada.
+3. **Tramite de Meta** para 4 plantillas WhatsApp (2-7 días de espera).
+4. **Cron real** en server: `* * * * * php artisan schedule:run` +
+   `pg-backup.sh` 02:00 + `pg-restore-test.sh` mensual.
+
+Estimación a producción: **3-5 días** para infra + secrets + DNS, +
+**2-7 días** de espera Meta para WhatsApp real (paralelo).
 
 ---
 
-## Estado actual (snapshot 2026-05-05)
+## Estado actual (snapshot 2026-05-07)
 
 ### ✅ Listo y verificado
 
-- Refundición visual LUMIA Old Money + sistema de presets (4 paletas).
-- White-label dinámico por tenant vía `<BrandingProvider>` scoped.
-- Roles ampliados (`platform_owner` / `admin` / `manager` / `receptionist` / `barber` / `client`) con middleware `EnsureRole`.
-- CRUD con permisos: Staff, Services, Products (endpoints; UI parcial).
-- Onboarding wizard 4-pasos cuando `users.first_login_at = null`.
-- Editor permanente de branding en `/admin/identity`.
-- Flujo público de reserva en `/b/{slug}` (BookingFlow 5 pasos).
-- Anti no-show: confirmación T-2h con botones, cancelación T-1h con lock distribuido Redis.
-- Circuit Breaker Redis (scripts Lua atómicos) sobre canales sensibles (WhatsApp, Twilio).
-- Feature gates Freemium: backend `EnsureFeatureEnabled` (402) + frontend `<FeatureGate>` con blur+candado.
-- Migraciones PostgreSQL con RLS escritas (no aplicadas — corre SQLite).
-- Sanctum Bearer auth (sin `statefulApi()` — fix Tarea 3.1).
-- Demo accounts funcionando (5 roles distintos, 1 con onboarding pendiente).
+**Núcleo**
+- Multi-tenant con `tenant_id` + RLS migración pendiente apply en pgsql.
+- Sanctum Bearer auth (sin `statefulApi()`).
+- Roles ampliados con `EnsureRole`.
+- Audit log con `LoggableChanges` trait + redaction.
+- 88 tests Pest passed / 3 skipped (Windows openssl).
 
-### ⚠️ Funcional pero mock / incompleto
+**Identidad y branding**
+- Refundición visual LUMIA Old Money + 6 presets (Lumina port).
+- White-label dinámico con `<BrandingProvider>` scoped (15 tokens
+  cromáticos por modo + 13/11 fuentes display/body con preview).
+- Onboarding wizard 5 pasos, editor `/admin/identity` con live preview.
 
-- **Pagos**: Stripe + MercadoPago en `MockGateway`. La página `/precios` dice "nuestro equipo te contacta".
-- **WhatsApp**: `LogWhatsappClient` escribe a `storage/logs/laravel.log`. No hay plantillas aprobadas por Meta.
-- **Twilio Voice**: stub. Fallback de no-show no llama realmente.
-- **Base de datos**: SQLite en dev. `migrate:fresh --seed` corre limpio. Postgres+RLS sólo en migraciones.
-- **CRUD UI**: Productos, Citas (admin manual), Cupones, BusinessHours — endpoints existen, UI no.
-- **Tests**: `Pest` instalado, ~0 tests reales. Riesgo alto de regresión en permisos.
+**Operación**
+- Agenda + slots + lifecycle citas (book/confirm/cancel/complete).
+- Anti no-show: T-24h, T-2h con botones, T-1h auto-cancel con lock
+  Redis distribuido.
+- POS ticketing **completo** con cupón + gift card + propina + stock
+  + payment + tip splits + auto-complete cita.
+- Cierre de caja con preview + variance.
+- Walk-in queue (público + admin).
+- Citas recurrentes (modelo + comando, UI placeholder).
 
-### ❌ No existe aún
+**Crecimiento**
+- Marketing retención + Loyalty + Referrals + Stripe Coupon real al
+  referral.completed.
+- Memberships con integración real en `BookAppointment`
+  (`deposit_status='covered'`, contador `services_used_this_period`).
+- Gift cards con `redeem()` atómico aplicado en POS.
+- Affiliates B2B con cron mensual + captura `?aff=`.
+- Ratings post-visita.
 
-- CI/CD pipeline (`.github/workflows/` vacío).
-- Manifests Kubernetes / IaC para producción.
-- Stack de observabilidad cableado (Prometheus/Loki/OpenTelemetry).
-- Backups automáticos.
-- Términos, Privacidad, política de cookies.
-- DPAs firmados con Meta/Stripe/Twilio.
+**Notificaciones**
+- WhatsApp real (`MetaWhatsappClient`) — falta sólo plantillas Meta.
+- Anti-no-show jobs con `delay()` y locks Redis.
+- Web Push real (VAPID puro PHP — payload encriptado AES-128-GCM).
+- In-app notifications con bell dropdown polling 60s.
 
----
+**Billing**
+- Stripe Checkout + provisión automática (`ProvisionTenantWithTrial`).
+- Webhooks con HMAC + idempotencia (`webhook_events` UNIQUE).
+- `invoice.paid` renueva memberships.
+- Free trial 14d + dunning grace period (`lumia:enforce-dunning`).
 
-## Bloqueantes de producción
+**Seguridad y compliance**
+- Cifrado PII (`users.phone/notes` cast `encrypted` + `phone_hash`
+  indexable).
+- 2FA TOTP (puro PHP) con recovery codes.
+- **2FA enforcement por tenant** (`EnforceTwoFactor` middleware activo).
+- **Strong password policy** (`StrongPassword::rule()` + HIBP).
+- Páginas legales (Términos, Privacidad, Cookies).
+- Cookie consent banner con **categorías granulares** (necesarias /
+  analíticas / marketing) + **re-consent anual**.
+- GDPR endpoints admin **y cliente final** (`/me`).
+- PII access log con helper `PiiAccessLogger` cableado.
+- Hardening: HMAC webhooks, throttle login/booking/webhook, CSP,
+  cookies Secure+HttpOnly, rotación tokens Sanctum.
+- Login alerts (IP/UA inusual con UAParser).
+- Rotación PII via `php artisan lumia:rotate-pii-key`.
+- Gitleaks + secrets scan en CI.
 
-> Sin resolver TODOS estos, no se sube. Cada uno tiene archivos a tocar
-> y criterio de aceptación medible.
+**Observabilidad**
+- Structured logs con `request_id`, `tenant_id`, `user_id`.
+- Sentry-compatible `ErrorReporter` (no-op si DSN vacío).
+- `/api/metrics` Prometheus exporter.
+- **`/api/up/deep`** healthcheck (DB+Redis+Stripe+Meta+Mail).
+- **Página pública `/status`** con badges OK/down/skipped.
+- Alert rules + Grafana dashboard JSON listos.
+- Tracing OpenTelemetry stub (`TracingHooks` no-op safe).
+- **`RateLimitByTenant`** middleware (600 req/min default).
 
-### B1 — Migrar a PostgreSQL real con RLS activado
+**DevOps**
+- GitHub Actions CI (lint + tests + build + gitleaks).
+- `Dockerfile.prod` backend + frontend.
+- `fly.toml` para Fly.io deployment.
+- Playwright E2E (admin login + booking público).
+- Renovate config para deps update.
+- 6 crons en `routes/console.php`.
+- Backups Postgres scripts (`pg-backup.sh` + `pg-restore-test.sh`).
 
-**Por qué bloquea**: shared-database multi-tenant sin RLS = un bug en un
-`where('tenant_id')` filtra datos entre clientes. Defensa en profundidad
-es no-negociable cuando hay teléfonos/emails de clientes finales.
+**UX**
+- Cmd+K command palette con búsqueda backend real.
+- DarkModeToggle, ConfettiOnMount, Skeleton, EmptyState.
+- Timeline visual del cliente (`/admin/clients/{id}`).
+- Responsive 100% (auditoría 2026-05-06, 32 findings).
 
-**Trabajo**:
-- Levantar Postgres 16 (ya hay `docker-compose.yml` con servicio listo).
-- Cambiar `DB_CONNECTION=pgsql` en `.env` y ajustar `database.php`.
-- Aplicar `2026_04_27_000001_enable_rls_for_tenant_tables.php`.
-- Verificar que `App\Infrastructure\Persistence\TenantConnectionResolver` (o el middleware `ResolveTenant`) emita `SET LOCAL app.current_tenant = '...'` por request.
-- Reescribir seeders que asuman SQLite (revisar `DemoTenantSeeder` y `OnboardingDemoSeeder` por raw queries SQLite-specific).
-- Ajustar columnas `JSONB` (en SQLite eran TEXT).
-- Probar cada test Pest contra Postgres en CI.
+### ⚠️ Funcional pero requiere config externa
 
-**Criterio de aceptación**:
-- Todos los seeders corren sin errores en Postgres.
-- Test que como `tenant A` intenta `Service::find($id_de_tenant_B)` devuelve `null` aun cuando se quita el global scope (RLS lo bloquea a nivel motor).
-- Métrica: tiempo de `migrate:fresh --seed` < 10s en CI.
+- **Stripe**: cliente real listo. Falta sólo activar live keys.
+- **WhatsApp**: cliente real listo. Falta plantillas aprobadas Meta.
+- **Twilio Voice** ✅ implementado (2026-05-08): `TwilioVoiceClient` real (POST /Calls + TwiML), driver "log" de fallback. Cableado al fallback no-show en `AutoCancelUnconfirmedAppointment` cuando `TWILIO_DRIVER=twilio`. Falta sólo activar credenciales.
+- **CFDI 4.0 MX**: interface + Null + Finkok skeleton. Falta XML real.
+- **Sentry**: SDK-compatible reporter listo. Falta DSN real.
+- **Google Calendar**: OAuth listo. Falta credenciales reales.
 
-### B2 — Stripe Checkout + provisión automática de tenants
+### 🔴 No existe aún
 
-**Por qué bloquea**: hoy no hay forma de que un usuario pague y se cree
-su cuenta. La landing miente diciendo "elige tu plan" cuando es un
-formulario de contacto.
-
-**Trabajo**:
-- Crear `App\Domain\Billing\Services\CreateCheckoutSession`.
-- Endpoint `POST /api/public/checkout` que recibe `{plan, email, business_name}` y devuelve URL de Stripe Checkout.
-- Webhook `POST /api/webhooks/stripe`:
-  - `checkout.session.completed` → `ProvisionTenant` (crea tenant + admin user + subscription + envía email con credenciales temporales).
-  - `invoice.payment_failed` → marca subscription `past_due`, notifica admin.
-  - `customer.subscription.deleted` → suspende features (downgrade a Free).
-- Validar firma HMAC con `stripe-php` (`Stripe\Webhook::constructEvent`).
-- Página `/checkout/success?session_id=...` que muestre "Revisa tu email".
-- Job `SendOnboardingEmail` con magic link (token 1-uso, expira 24h).
-
-**Criterio de aceptación**:
-- Comprar plan Pro en modo test crea: 1 tenant, 1 user `admin` con `first_login_at=null`, 1 subscription activa, 1 email recibido con magic link.
-- Webhook con firma inválida responde 400.
-- Idempotencia: reenviar el mismo `checkout.session.completed` no crea duplicados (chequear `stripe_event_id` en `webhook_events`).
-
-### B3 — WhatsApp Cloud API + plantillas aprobadas
-
-**Por qué bloquea**: el diferenciador #1 del producto (anti no-show) hoy
-escribe a un log. Sin envío real no hay producto.
-
-**Trabajo**:
-- Verificar número de WhatsApp Business con Meta (proceso de 2-7 días).
-- Crear y someter a aprobación 4 plantillas:
-  1. `appointment_confirmation` — al crear cita.
-  2. `appointment_reminder_24h` — recordatorio amigable.
-  3. `appointment_reminder_2h_with_buttons` — con quick replies Confirmar/Reagendar/Cancelar.
-  4. `appointment_cancelled_no_response` — cancelación + retención de depósito.
-- Reemplazar `LogWhatsappClient` por `MetaWhatsappClient` (HTTP a `graph.facebook.com/v20.0/{phone_id}/messages`).
-- Webhook `POST /api/webhooks/whatsapp` para recibir respuestas a botones (validar `X-Hub-Signature-256`).
-- Mapear `button_payload` → `ConfirmAppointment` / `RescheduleAppointment` / `CancelAppointment`.
-- Mantener Circuit Breaker (ya existe) — abrir tras 5 fallos en 60s.
-
-**Criterio de aceptación**:
-- Crear cita de prueba envía un WhatsApp real al número verificado.
-- Responder al botón "Confirmar" cambia el estado a `confirmed` en < 5s.
-- Si Meta API responde 429, el breaker se abre y los siguientes envíos van a cola con backoff exponencial.
-
-### B4 — Cifrado PII en reposo
-
-**Por qué bloquea**: §8 lo exige, y es requisito legal en muchos países
-LATAM tener teléfonos/emails cifrados en reposo. Migrar después es 10x
-más doloroso que hacerlo antes de tener datos reales.
-
-**Trabajo**:
-- Añadir cast `encrypted` a `Client::$casts` para `phone`, `email`, `notes`.
-- Migración para renombrar columnas a nullable y re-cifrar las existentes (los seeders se borran y regeneran, no hay datos reales aún → fácil ahora, doloroso después).
-- Para queries: `Client::where('phone_hash', hash('sha256', $phone))` con columna `phone_hash` indexable separada (porque `encrypted` no se puede indexar útilmente).
-- Lo mismo para `users.phone` si se guarda.
-
-**Criterio de aceptación**:
-- `psql -c "SELECT phone FROM clients LIMIT 1"` devuelve un blob base64, no un teléfono.
-- Búsqueda por teléfono sigue funcionando vía `phone_hash`.
-
-### B5 — Hardening de webhooks, sesiones y rate limiting
-
-**Por qué bloquea**: cualquier endpoint `/api/webhooks/*` sin firma HMAC
-es una puerta abierta. Sin rate limiting, login es brute-forceable.
-
-**Trabajo**:
-- Validación HMAC en cada webhook: Stripe (`stripe-signature`), Meta (`X-Hub-Signature-256`), Twilio (`X-Twilio-Signature`). Ya documentado en §8 — verificar implementación real.
-- Throttle en login: `throttle:5,1` por IP + `throttle:5,15` por email.
-- Throttle en `/api/client/appointments` (POST): `throttle:10,60` por IP — evita bots reservando slots.
-- Cookies con `Secure` y `HttpOnly` siempre en prod (`config/session.php`).
-- Rotación de tokens Sanctum: `sanctum.expiration = 60 * 24 * 7` (7 días) y refresh on activity.
-- CSP headers vía middleware (`Content-Security-Policy`, `X-Frame-Options: DENY`, `Strict-Transport-Security`).
-
-**Criterio de aceptación**:
-- Webhook con firma falsa → 400.
-- 6º intento de login con password incorrecto desde la misma IP en < 1min → 429.
-- Headers de seguridad presentes en respuesta de cualquier ruta (curl `-I`).
-
-### B6 — Secrets management y env de producción
-
-**Por qué bloquea**: cualquier secret en repo o en CI logs invalidado
-implica rotar todas las integraciones (Stripe live, Meta, Twilio, JWT
-keys). Una vez expuesto, el daño es irreversible.
-
-**Trabajo**:
-- `backend/.env.production` separado, **no** en repo (ya está gitignored).
-- Secrets en gestor: AWS Secrets Manager / Doppler / Vault. NO `.env` en producción.
-- `APP_DEBUG=false`, `APP_ENV=production`, `LOG_LEVEL=warning` en prod.
-- `php artisan key:generate` con `APP_KEY` rotado (no reusar el de dev).
-- Stripe live keys, Meta tokens, Twilio creds — todos nuevos para prod.
-- Romper el repo si alguien comitea un secret: pre-commit hook con `gitleaks` o `trufflehog`.
-
-**Criterio de aceptación**:
-- `grep -r "sk_live\|sk_test_real" .` no encuentra nada.
-- Pre-commit hook bloquea cualquier patrón de API key.
-- Documento `docs/SECRETS_RUNBOOK.md` con quién tiene acceso a qué y cómo rotar.
+- IaC (Terraform/Pulumi) para infra prod.
+- App móvil del barbero (proyecto separado).
+- Chat en vivo cliente↔barbería (Reverb).
+- AI assistant para WhatsApp.
+- ML real para no-show prediction (hay regla simple).
+- Multi-idioma EN frontend (`I18N.md`).
 
 ---
 
-## Importantes (no bloquean técnicamente, pero no se debería cobrar sin esto)
+## Bloqueantes restantes para producción
 
-### I1 — Tests Pest mínimos
+> El listado original B1-B6 se ha completado **excepto la activación
+> operativa**. Lo que queda es operacional, no de código.
 
-- Smoke por endpoint CRUD: que cada `POST/PUT/DELETE` con datos válidos devuelva 200/201 y persista.
-- Matriz de roles: 5 roles × cada endpoint protegido por `role:` → ¿devuelve 200 o 403 según matriz?
-- Anti no-show: cita creada en T → confirmada en T-2h → no se cancela. Cita sin respuesta → cancelada en T-1h con depósito retenido.
-- Branding: cambiar preset de tenant A no afecta tenant B (regression de scoping).
+### Op-1 — Activar Postgres en prod
 
-**Meta**: cobertura > 60% en `app/Domain/*`, 100% en `app/Http/Middleware/*`.
+**Estado código**: ✅ código listo. Migración RLS escrita.
 
-### I2 — CRUD UI faltante
+**Pendiente operacional**:
 
-Endpoints existen, falta frontend:
-- `frontend/src/app/(admin)/admin/pos/products/ProductsClient.tsx` (espejo de `ServicesClient`).
-- Modal "Crear cita manual" en `/admin/agenda` (admin/manager/receptionist).
-- `/admin/marketing/coupons` con generador de cupones únicos.
-- Editor visual `BusinessHours` en `/admin/settings/hours` (drag para horarios, blackouts).
+```bash
+# 1. .env.production
+DB_CONNECTION=pgsql
+DB_HOST=...
+DB_DATABASE=lumia
+DB_USERNAME=lumia_app
+DB_PASSWORD=<gestor>
 
-### I3 — Permisos finos en UI
+# 2. Aplicar
+php artisan migrate --force
+# La migración 2026_04_27_000001_enable_rls_for_tenant_tables aplica
+# políticas RLS a todas las tablas tenant-scoped.
 
-Backend ya bloquea, pero la UI muestra botones que devuelven 403. Esconder según `can_write` / `can_see_finance` que ya viene de `/auth/me`:
-- `/admin/finance/*` → invisible para `barber`, `receptionist`.
-- Botón "Eliminar barbero" → invisible para `manager` (sólo admin).
-- Botón "Cambiar plan" → sólo `admin`.
+# 3. Verificar
+psql -c "SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname='public' AND rowsecurity = true"
+```
 
-### I4 — Infraestructura de producción
+**Criterio**: test `tests/Feature/Domain/TenantIsolationTest.php` (existe)
+debe pasar contra Postgres.
 
-- Manifests Kubernetes (o Fly.io / Railway / Render para empezar barato).
-- Laravel Horizon con Redis persistente (no `cache file`).
-- Backups automáticos PITR de Postgres (RPO ≤ 1h, RTO ≤ 4h).
-- TLS via Cloudflare o Let's Encrypt.
-- CDN para assets (`/storage/logos/*`).
-- Health checks (`/up` ya viene en Laravel 11) + readiness probes.
+### Op-2 — Configurar secrets en gestor
 
-### I5 — Observabilidad
+**Estado código**: ✅ todas las creds leídas via `config()` desde `.env`.
 
-- Prometheus + Grafana o Datadog.
-- Dashboards mínimos:
-  - Tasa de no-shows por tenant (semana móvil).
-  - Webhooks fallidos (Stripe / Meta / Twilio) por hora.
-  - Circuit breakers abiertos en este momento.
-  - p50 / p95 / p99 de `/api/client/availability` y `/api/client/appointments`.
-  - Errores 4xx / 5xx por endpoint.
-- Alertas:
-  - Stripe webhook failure rate > 1% en 5min → page on-call.
-  - Cualquier 5xx en endpoints públicos → log estructurado + alerta.
-- Tracing OpenTelemetry: span por request con `tenant_id`, `user_id`, `request_id`.
+**Pendiente**: elegir gestor (Doppler / AWS Secrets Manager / Vault) y
+poblar:
 
-### I6 — Legal / Compliance
+```
+APP_KEY=<nuevo, no reusar dev>
+DB_PASSWORD=<random>
+STRIPE_SECRET=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PUBLIC_KEY=pk_live_...
+WHATSAPP_TOKEN=<Meta Bearer>
+WHATSAPP_PHONE_ID=<Meta phone number id>
+META_VERIFY_TOKEN=<random, configurar en webhook Meta>
+META_APP_SECRET=<Meta app secret>
+GOOGLE_CALENDAR_CLIENT_ID=...
+GOOGLE_CALENDAR_CLIENT_SECRET=...
+MAIL_HOST=...
+MAIL_USERNAME=...
+MAIL_PASSWORD=...
+TWILIO_SID=...
+TWILIO_TOKEN=...
+TWILIO_FROM=...
+SENTRY_DSN=https://...
+VAPID_PUBLIC_KEY=<base64url>
+VAPID_PRIVATE_KEY=<base64url>
+```
 
-- Términos de Servicio + Política de Privacidad (LATAM + GDPR si hay clientes UE).
-- Política de cookies (banner si se sirve a UE).
-- DPA con Meta, Stripe, Twilio (los 3 ofrecen DPA estándar firmable).
-- Política de retención: eliminar datos de clientes finales tras X meses sin actividad.
-- Endpoint `/api/admin/data-export` (GDPR Art. 15) y `/api/admin/data-deletion` (Art. 17).
+Generar VAPID con: `php artisan lumia:generate-vapid-keys`.
+
+### Op-3 — Tramite Meta WhatsApp Cloud API
+
+**Estado código**: ✅ `MetaWhatsappClient` real + webhook signature.
+
+**Pendiente**:
+
+1. Verificar número con Meta Business (2-7 días).
+2. Someter 4 plantillas:
+   - `appointment_confirmation`
+   - `appointment_reminder_24h`
+   - `appointment_reminder_2h_with_buttons`
+   - `appointment_cancelled_no_response`
+3. Configurar webhook URL en Meta apuntando a `/api/webhooks/whatsapp`.
+
+### Op-4 — Crons y backups en server
+
+**Estado código**: ✅ 6 jobs schedule + 2 scripts backup.
+
+**Pendiente** en el servidor:
+
+```bash
+# /etc/cron.d/lumia
+* * * * * www-data cd /opt/lumia/backend && php artisan schedule:run >> /var/log/lumia-schedule.log 2>&1
+
+0 2 * * * root /opt/lumia/infra/backups/pg-backup.sh
+0 3 1 * * root /opt/lumia/infra/backups/pg-restore-test.sh
+```
+
+Para Horizon, además:
+
+```bash
+# systemd unit lumia-horizon.service
+[Service]
+ExecStart=/usr/bin/php /opt/lumia/backend/artisan horizon
+Restart=always
+```
+
+### Op-5 — DNS + TLS
+
+**Pendiente**:
+
+1. Apuntar `app.lumia.app` → IP del API.
+2. Apuntar `*.lumia.app` → IP del frontend (para tenants subdomain
+   propio antes de custom domains).
+3. TLS via Cloudflare (automático) o certbot.
+4. Wildcard cert para `*.lumia.app`.
+
+### Op-6 — Sentry / Logging real
+
+**Estado código**: ✅ `ErrorReporter` listo.
+
+**Pendiente**: crear projects en Sentry (o GlitchTip self-hosted),
+poblar `SENTRY_DSN` en gestor.
 
 ---
 
-## Quick wins (1-2 días)
+## Importantes (no bloquean técnicamente, pero conviene)
 
-- **CI con GitHub Actions**: lint PHP (Pint) + lint TS (ESLint) + tests Pest + build Next.js. Bloquea merge si falla.
-- **Logo real del tenant demo** `el-navajazo` (hoy es sólo el wordmark LUMIA).
-- **`php artisan optimize`** + verificar que `next build` cumple §9 (admin bundle < 180KB gzipped).
-- **README.md operativo**: cómo levantar local, cómo correr tests, cómo deployar staging.
-- **`.env.example`** completo con todas las variables (hay `.env` vacío para dev pero no `.env.example` documentado).
+### I1 — UI faltante (cierre de caja) ✅ 2026-05-08
+
+Implementado en `frontend/src/app/admin/cash-close/page.tsx` +
+`components/admin/CashCloseClient.tsx`. Filtros por barbero/fecha,
+preview con KPIs (tickets, bruto, propinas, comisión), desglose por
+método, input de efectivo declarado con varianza en vivo, notas y
+submit a `/api/admin/cash-close`. Sidebar entry visible para usuarios
+con `can_write && can_see_finance`.
+
+### I2 — Drag-drop reagendar ✅ 2026-05-08
+
+Implementado dentro de `components/admin/AgendaCalendar.tsx`. Cada
+bloque de cita es `draggable` (excepto cancelled/no_show/completed);
+las columnas de día son drop targets que snap a 15 min. Optimistic
+update + rollback con toast en errores 409 (slot_taken), 422 (fecha
+inválida), 403 (rol). Verificado E2E vía proxy Next.js.
+
+### I3 — UI compra pública gift cards ✅ 2026-05-08
+
+Implementado:
+- `frontend/src/app/b/[slug]/gift/page.tsx` (server component con
+  branding del tenant) + `GiftCardCheckoutClient` con presets de monto,
+  custom amount, datos sender/recipient, mensaje, validación local +
+  remota.
+- `/b/[slug]/gift/success?code=...` muestra código + valor + vencimiento
+  consultando `/api/public/giftcards/{slug}/{code}`.
+- Backend `PublicGiftCardController` con flujo dual:
+  - Mock driver: crea GiftCard inmediato + email al recipient.
+  - Real Stripe: `checkout.sessions` mode=payment con metadata
+    `purpose=gift_card`; webhook `materializeGiftCardFromSession`
+    crea la card + email cuando recibe `checkout.session.completed`.
+
+### I4 — UI cliente final memberships ✅ 2026-05-08
+
+Implementado:
+- `MembershipsSection` cargado dentro de `ClientPortalClient` (`/me`).
+  Lista planes activos del tenant, muestra membresía activa con periodo
+  + servicios usados/incluidos, botón "Suscribirme" → Stripe Checkout
+  subscription (mock crea ClientMembership en ese mismo POST).
+- Backend `PublicMembershipsController` autenticado por el mismo
+  magic link `client_portal` (mismo TTL 30 min).
+- Webhook `materializeMembershipFromSession` para flujo Stripe real
+  (metadata `purpose=membership_subscription`).
+
+### I5 — Affiliate dashboard self-service ✅ 2026-05-08
+
+Implementado:
+- `/affiliates/signup` con form (nombre + email) → email con código
+  `AFF-XXXXXX` privado + link único `?aff=...`.
+- `/affiliates` con login por código (persiste en localStorage) →
+  dashboard con KPIs (referidos, MRR, comisión pagada), link único
+  copiable, tabla de referidos.
+- Backend `PublicAffiliatesController`:
+  - `POST /api/public/affiliates/signup` (no revela si email existe).
+  - `POST /api/public/affiliates/dashboard` autenticado por el `code`
+    (12 chars, ~10^14 combinaciones — buen MVP).
+- Pendiente futuro: magic-link auth (en vez de code-as-token) para
+  rotación si se filtra.
+
+### I6 — Stripe Connect Express ✅ 2026-05-08
+
+- Migración `2026_05_08_000001_add_stripe_account_to_affiliates`
+  agrega `stripe_account_id` + `stripe_payouts_enabled` + `last_paid_at`.
+- `App\Domain\Affiliates\Services\StripeConnectService` con
+  `onboardLink`, `refreshStatus`, `transfer` (mode=destination).
+- Endpoints públicos `connect/start` y `connect/refresh`.
+- Banner en `/affiliates` para conectar/continuar onboarding.
+- `lumia:pay-affiliate-commissions` ahora dispara `Transfer` para
+  affiliates con Connect activo y acumula deuda para los demás.
+
+### I7 — CFDI Finkok production ✅ 2026-05-08
+
+- `CfdiXmlBuilder` arma CFDI 4.0 (Comprobante + Emisor + Receptor +
+  Conceptos + Impuestos al 16%).
+- `CfdiSealer` computa cadena original simplificada y firma RSA-SHA256
+  con la CSD (`.key.pem` + passphrase).
+- `FinkokCfdiPac` arma SOAP envelope + POST a Finkok stamp + parsea
+  UUID/CodEstatus + persiste XML sellado en disco (`CFDI_DISK`).
+- `EmitCfdiForAppointment` orquesta build → seal → stamp → persist
+  `CfdiInvoice` (status draft/stamped/failed).
+- Endpoints `/api/admin/cfdi`, `POST /api/admin/cfdi/{appointment}`,
+  `GET /api/admin/cfdi/{id}/xml`.
+- **Pendiente para 100% compliance**: aplicar XSLT oficial SAT
+  (`cadenaoriginal_4_0.xslt`) — algunos PAC son estrictos. La
+  implementación actual funciona con Finkok dev/sandbox.
+
+### I8 — Vista calendario semanal ✅ 2026-05-08
+
+`/admin/agenda` ahora usa `AgendaCalendar`: grid 7 columnas × franja
+horaria 7-22h, citas como bloques posicionados absolutos con color por
+estado, toggle Día/Semana, navegación prev/hoy/next, drawer de detalle
+con reasignación de barbero. Re-fetcha al navegar; cubre I8 + I2 en un
+solo componente.
+
+### I9 — Multi-idioma EN frontend ✅ 2026-05-08 (scaffold)
+
+- `lib/i18n/dict.ts` con namespaces `landing` + `common` (ES + EN).
+- `t()` helper + `getServerLocale()` (cookie `lumia_locale`).
+- `LocaleSwitcher` montado en footer landing.
+- `POST /api/i18n` persiste cookie 1 año.
+- **Pendiente futuro**: traducir admin (~200 strings adicionales) y
+  routing por path `/en/*` cuando sea necesario para SEO.
+
+### I10 — Onboarding tutorial guiado ✅ 2026-05-08
+
+- `OnboardingTour` con spotlight + tooltip animado, 5 pasos
+  (Dashboard, Agenda, Identidad, Servicios, POS).
+- Se dispara automáticamente para usuarios que ya completaron el
+  wizard (`first_login_at` set) y no han descartado el tour
+  (`localStorage.lumia_tour_v1_done`).
+- Botón "Ver tour de bienvenida" en sidebar para reabrir manualmente
+  (event `lumia:tour:open`).
 
 ---
 
-## Orden de ejecución sugerido
+## Quick wins (1-2 horas cada uno)
 
-1. **B1 (Postgres+RLS)** — cuesta más postergar que cualquier otra cosa, porque exige reescribir tests y seeders. Bloquea todo lo demás indirectamente.
-2. **Quick wins (CI + .env.example)** — necesarios para que cualquier otro trabajo se valide automáticamente.
-3. **B6 (Secrets)** — antes de tocar Stripe/Meta hay que tener dónde guardar las llaves reales.
-4. **B2 (Stripe + provisión)** — primera fuente de revenue real. Sin esto el producto es una demo.
-5. **B3 (WhatsApp real)** — diferenciador #1, pero requiere 2-7 días de aprobación de Meta. Arrancar el trámite **en paralelo a B2**.
-6. **B4 (PII)** — antes de tener datos reales de clientes finales.
-7. **B5 (Hardening)** — antes del primer beta tester externo.
-8. **I1 (Tests)** — antes del primer cliente que pague.
-9. **I4 + I5 (Infra + Observabilidad)** — antes del primer cliente con tráfico real (>10 req/min).
-10. **I6 (Legal)** — antes de cualquier marketing público.
-11. **I2 + I3 (CRUD UI + permisos finos)** — pueden iterar después del lanzamiento si no son críticos para el primer use case.
-
----
-
-## Riesgos con seguimiento
-
-| Riesgo | Probabilidad | Impacto | Mitigación |
-|--------|:------------:|:-------:|------------|
-| Aprobación de plantillas WhatsApp tarda > 7 días | Media | Alto | Empezar trámite **ya**, no en paralelo a desarrollo |
-| Stripe rechaza la cuenta business (LATAM) | Baja | Crítico | Tener MercadoPago como fallback completo |
-| Bug en RLS filtra datos entre tenants | Baja | Crítico | Test obligatorio en CI: `tenant_isolation_test.php` |
-| Webhook duplicado (Stripe reintenta) crea tenant x2 | Media | Alto | Tabla `webhook_events` con UNIQUE en `event_id`, idempotencia |
-| Circuit breaker mal calibrado bloquea envíos legítimos | Media | Medio | Métricas en Grafana + alerta cuando `state=open` > 5min |
-| Bundle frontend supera 180KB en admin | Media | Bajo | Bundle analyzer en CI, dynamic imports para `BrandingEditor`, `OnboardingWizard` |
+- **Logo real del tenant demo** `el-navajazo` (hoy sólo wordmark LUMIA) — pendiente.
+- ✅ **Bundle analyzer** — `ANALYZE=1 npm run build` + `scripts/check-bundle-budget.mjs` (200KB admin / 220KB cliente / 250KB default).
+- ✅ **Renovate auto-merge** — `:automergePatch` + `automergeType:branch` + `platformAutomerge`. Major frameworks excluidos.
+- ✅ **Slack alert** — `lumia:health-poll` cada minuto, alerta tras 3 fallos consecutivos. Env: `APP_HEALTH_URL`, `SLACK_HEALTH_WEBHOOK`.
+- ✅ **GA + PostHog gated** — `<Analytics />` en root layout, carga sólo cuando `consent.analytics=true`. Env: `NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_GA_ID`.
 
 ---
 
 ## Cómo retomar esta sesión en otra computadora
 
 ```bash
-# 1. Clonar y posicionarse
+# 1. Clonar
 git clone https://github.com/LUMIA-AI-SOLUTIONS/Sistema_Barberia.git
 cd Sistema_Barberia
 
-# 2. Backend
+# 2. Backend (Windows con PHP 8.4)
 cd backend
-cp .env.example .env  # rellenar APP_KEY, DB_*, etc.
-composer install
+copy .env.example .env
+php "C:\Program Files\PHP\v8.4\composer" install
 php artisan key:generate
 php artisan migrate:fresh --seed
-nohup php artisan serve --port=8000 > /tmp/lumia-backend.log 2>&1 & disown
+# Background server (nohup en Linux/Mac, Start-Process en PS):
+php artisan serve --host=127.0.0.1 --port=8000
+# o en background con disown:
+# nohup php artisan serve --port=8000 > /tmp/lumia-backend.log 2>&1 & disown
 
-# 3. Frontend (otra terminal)
+# 3. Frontend
 cd ../frontend
-cp .env.local.example .env.local  # apuntar NEXT_PUBLIC_API_URL=http://localhost:8000
+copy .env.local.example .env.local
 npm install
-nohup npm run dev > /tmp/lumia-frontend.log 2>&1 & disown
+npm run dev
+# o en background: nohup npm run dev > /tmp/lumia-frontend.log 2>&1 & disown
 
-# 4. Verificar que :3000 y :8000 están vivos
-lsof -ti:3000 :8000
+# 4. Verificar
+curl http://localhost:8000/api/up/deep | jq
+curl http://localhost:3000/status
 
-# 5. Login con cualquier demo account (ver claude.md §11)
+# 5. Login
+# admin@elnavajazo.test / password
 open http://localhost:3000/login
 ```
 
-**Antes de empezar Tarea 4**: leer este doc + `claude.md` §10 (log de bugs)
-+ §11 (estado actual). Cualquier decisión arquitectónica tomada en otra
-máquina debe documentarse aquí mismo antes de mergear.
+**Antes de empezar el siguiente bloque**: leer `CLAUDE.md` §11 (estado
+vivo), `docs/SESSION_LOG.md` (bitácora) y este doc. Cualquier decisión
+arquitectónica nueva se documenta primero aquí o en su doc específico.
 
 ---
 
 ## Cambios desde la última auditoría
 
+- **2026-05-07** — Refundición completa tras bloques A-EE. Todos los
+  bloqueantes B1-B6 cerrados a nivel código; pasamos a Op-1 a Op-6
+  (operacional). Núcleo listo para beta cerrado. Ver `SESSION_LOG.md`
+  para detalle archivo-por-archivo.
 - **2026-05-05** — Documento creado. Audit inicial post-Tarea 3.1.

@@ -1,0 +1,45 @@
+# Configuración gitleaks específica para LUMIA.
+# Las reglas por defecto cubren la mayoría de patrones; aquí añadimos las
+# específicas del stack (Stripe, Meta, Twilio) y allowlist de demos.
+
+title = "LUMIA gitleaks config"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "stripe-live-secret"
+description = "Stripe live secret key"
+regex = '''sk_live_[0-9a-zA-Z]{24,}'''
+
+[[rules]]
+id = "stripe-restricted-key"
+description = "Stripe restricted secret key"
+regex = '''rk_live_[0-9a-zA-Z]{24,}'''
+
+[[rules]]
+id = "meta-system-user-token"
+description = "Meta long-lived system user token"
+regex = '''EAA[A-Za-z0-9]{50,}'''
+
+[[rules]]
+id = "twilio-account-sid"
+description = "Twilio account SID"
+regex = '''AC[a-f0-9]{32}'''
+
+# Allowlist: tokens de prueba en seeders / mocks
+[allowlist]
+description = "ignore mock tokens, demo accounts, env.example placeholders"
+paths = [
+  '''backend/\.env\.example''',
+  '''frontend/\.env\.local\.example''',
+  '''backend/database/seeders/.*\.php''',
+  '''backend/tests/.*''',
+  '''docs/SECRETS_RUNBOOK\.md''',
+]
+regexes = [
+  '''sk_test_''',
+  '''pk_test_''',
+  '''ch_mock_''',
+  '''wamid\.MOCK\.''',
+]

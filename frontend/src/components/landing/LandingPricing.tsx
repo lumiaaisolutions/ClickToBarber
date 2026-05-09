@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useState } from "react";
 import type { Plan } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { CheckoutDialog } from "./CheckoutDialog";
 
 interface FeatureRow {
   code: string;
@@ -52,6 +53,10 @@ const PLAN_TAGLINE: Record<string, string> = {
 
 export function LandingPricing({ plans }: { plans: Plan[] }) {
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
+  const [checkout, setCheckout] = useState<{
+    plan: Plan;
+    priceLabel: string;
+  } | null>(null);
 
   return (
     <section id="pricing" className="relative py-20 sm:py-32 px-4 sm:px-6 bg-bg-paper/40">
@@ -85,15 +90,25 @@ export function LandingPricing({ plans }: { plans: Plan[] }) {
               plan={plan}
               billing={billing}
               index={i}
+              onCheckout={(priceLabel) => setCheckout({ plan, priceLabel })}
             />
           ))}
         </div>
 
         <p className="text-center text-xs text-ink-muted italic mt-10 max-w-xl mx-auto">
-          Precios en MXN. Activamos tu cuenta de forma manual tras confirmar el pago —
-          recibes credenciales y un wizard de identidad para personalizar tu portal.
+          Pago seguro vía Stripe. Tras confirmar el pago recibes un correo con el
+          enlace para terminar la configuración de tu portal.
         </p>
       </div>
+
+      <CheckoutDialog
+        open={!!checkout}
+        onClose={() => setCheckout(null)}
+        planSlug={checkout?.plan.code ?? ""}
+        planName={checkout?.plan.name ?? ""}
+        billingCycle={billing}
+        priceLabel={checkout?.priceLabel ?? ""}
+      />
     </section>
   );
 }
@@ -102,12 +117,15 @@ function PricingCard({
   plan,
   billing,
   index,
+  onCheckout,
 }: {
   plan: Plan;
   billing: "monthly" | "yearly";
   index: number;
+  onCheckout: (priceLabel: string) => void;
 }) {
   const isPro = plan.code === "pro";
+  const isFree = plan.code === "free";
   const allFeatures = new Set([
     ...plan.features,
     ...(META_FEATURES_BY_PLAN[plan.code] ?? []),
@@ -119,6 +137,7 @@ function PricingCard({
   const monthly = plan.price_cents;
   const effective = billing === "yearly" ? Math.round(monthly * 0.8) : monthly;
   const display = effective === 0 ? "$0" : `$${(effective / 100).toLocaleString("es-MX")}`;
+  const priceLabel = `${display} MXN / mes`;
 
   return (
     <motion.article
@@ -163,16 +182,25 @@ function PricingCard({
         )}
       </div>
 
-      <Link
-        href={`/precios?plan=${plan.code}`}
-        className={cn(
-          "btn justify-center text-sm mb-7",
-          isPro ? "btn-primary" : "btn-ghost",
-        )}
-      >
-        {plan.code === "free" ? "Empezar gratis" : "Cotizar plan"}
-        <ArrowUpRight size={14} />
-      </Link>
+      {isFree ? (
+        <Link
+          href="/login"
+          className={cn("btn justify-center text-sm mb-7", "btn-ghost")}
+        >
+          Empezar gratis <ArrowUpRight size={14} />
+        </Link>
+      ) : (
+        <button
+          type="button"
+          onClick={() => onCheckout(priceLabel)}
+          className={cn(
+            "btn justify-center text-sm mb-7",
+            isPro ? "btn-primary" : "btn-ghost",
+          )}
+        >
+          Activar este plan <ArrowUpRight size={14} />
+        </button>
+      )}
 
       <hr className="hairline mb-5" />
 

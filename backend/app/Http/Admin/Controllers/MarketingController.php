@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Admin\Controllers;
 
+use App\Domain\Audit\PiiAccessLogger;
 use App\Domain\Marketing\Services\RetentionScan;
 use App\Domain\Tenancy\CurrentTenant;
 use Illuminate\Http\Request;
@@ -21,6 +22,8 @@ final class MarketingController
         $days = (int) $request->input('days', 30);
 
         $clients = $this->retention->inactiveClients($tenant->id, $days);
+
+        PiiAccessLogger::log('admin.marketing.inactive', 'client', null, $clients->count());
 
         return [
             'days_threshold' => $days,

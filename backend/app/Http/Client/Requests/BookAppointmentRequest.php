@@ -25,6 +25,7 @@ final class BookAppointmentRequest extends FormRequest
             'client_email' => ['required', 'email', 'max:160'],
             'client_phone' => ['required', 'string', 'min:8', 'max:30'],
             'notes'        => ['nullable', 'string', 'max:500'],
+            'referral_code' => ['nullable', 'string', 'max:24'],
         ];
     }
 
@@ -33,14 +34,15 @@ final class BookAppointmentRequest extends FormRequest
         $tenant = app(CurrentTenant::class)->require();
 
         return new BookAppointmentInput(
-            tenantId:    $tenant->id,
-            barberId:    (int) $this->input('barber_id'),
-            serviceId:   (int) $this->input('service_id'),
-            clientName:  $this->string('client_name')->toString(),
-            clientEmail: $this->string('client_email')->toString(),
-            clientPhone: $this->string('client_phone')->toString(),
-            startsAt:    $this->string('starts_at')->toString(),
-            notes:       $this->input('notes'),
+            tenantId:     $tenant->id,
+            barberId:     (int) $this->input('barber_id'),
+            serviceId:    (int) $this->input('service_id'),
+            clientName:   $this->string('client_name')->toString(),
+            clientEmail:  $this->string('client_email')->toString(),
+            clientPhone:  $this->string('client_phone')->toString(),
+            startsAt:     $this->string('starts_at')->toString(),
+            notes:        $this->input('notes'),
+            referralCode: $this->input('referral_code'),
         );
     }
 }

@@ -7,6 +7,7 @@ namespace App\Domain\Identity\Models;
 use App\Domain\Tenancy\Models\Tenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Domain\Audit\LoggableChanges;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -14,7 +15,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, LoggableChanges, Notifiable, SoftDeletes;
 
     public const ROLE_PLATFORM_OWNER = 'platform_owner';
     public const ROLE_ADMIN          = 'admin';
@@ -34,22 +35,63 @@ class User extends Authenticatable
 
     protected $fillable = [
         'tenant_id', 'name', 'email', 'phone', 'role',
-        'password', 'preferences', 'last_visit_at', 'first_login_at',
+        'password', 'preferences', 'notes',
+        'last_visit_at', 'first_login_at',
     ];
 
     protected $hidden = [
-        'password', 'remember_token',
+        'password', 'remember_token', 'phone_hash',
+        'two_factor_secret', 'two_factor_recovery_codes',
     ];
 
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'first_login_at'    => 'datetime',
-            'last_visit_at'     => 'datetime',
-            'password'          => 'hashed',
-            'preferences'       => 'array',
+            'email_verified_at'        => 'datetime',
+            'first_login_at'           => 'datetime',
+            'last_visit_at'            => 'datetime',
+            'two_factor_confirmed_at'  => 'datetime',
+            'password'                 => 'hashed',
+            'preferences'              => 'array',
+            'phone'                    => 'encrypted',
+            'notes'                    => 'encrypted',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (User $user) {
+            // Mantiene phone_hash sincronizado para lookups indexables
+            // sobre teléfonos cifrados en reposo.
+            if ($user->isDirty('phone')) {
+                $phone = $user->getAttribute('phone');
+                $user->setAttribute(
+                    'phone_hash',
+                    $phone ? self::hashPhone((string) $phone) : null,
+                );
+            }
+        });
+    }
+
+    /** Normaliza y hashea un teléfono para búsqueda indexable. */
+    public static function hashPhone(string $phone): string
+    {
+        $normalized = preg_replace('/[^0-9+]/', '', $phone) ?? '';
+
+        return hash('sha256', $normalized);
+    }
+
+    /**
+     * Busca un usuario por teléfono dentro de un tenant usando el hash.
+     * Reemplaza a `where('phone', $phone)` que no funciona con cifrado.
+     */
+    public static function findByPhone(string $tenantId, string $phone): ?self
+    {
+        return static::query()
+            ->withoutGlobalScopes()
+            ->where('tenant_id', $tenantId)
+            ->where('phone_hash', self::hashPhone($phone))
+            ->first();
     }
 
     public function tenant(): BelongsTo

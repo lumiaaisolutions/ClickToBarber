@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { OnboardingTour } from "@/components/admin/OnboardingTour";
 import { BrandingProvider } from "@/components/branding/BrandingProvider";
 import { FALLBACK_BRANDING, fetchAdminBranding } from "@/lib/branding-api";
 import { AUTH_COOKIE, serverAuthHeader, API_BASE } from "@/lib/auth";
@@ -98,6 +99,8 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           userName={me.user.name}
           userEmail={me.user.email}
           userRole={me.user.role}
+          canWrite={me.user.can_write}
+          canSeeFinance={me.user.can_see_finance}
           tenantName={me.tenant?.name}
           tenantSlug={me.tenant?.slug ?? null}
         />
@@ -106,6 +109,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             {children}
           </div>
         </main>
+        <OnboardingTour enabled={!!me.user.first_login_at} />
       </div>
     </BrandingProvider>
   );

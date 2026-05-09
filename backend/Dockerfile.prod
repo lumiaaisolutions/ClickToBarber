@@ -1,0 +1,37 @@
+# LUMIA backend — imagen de producción.
+#
+# Multi-stage:
+#   1. composer install (sin dev deps)
+#   2. runtime PHP-FPM + Nginx (serversideup/php) con la app copiada.
+#
+# Variables esperadas en runtime:
+#   APP_KEY, DB_*, REDIS_*, STRIPE_*, WHATSAPP_*, MAIL_*
+
+FROM composer:2 AS deps
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
+COPY . .
+RUN composer dump-autoload --optimize --no-dev
+
+FROM serversideup/php:8.3-fpm-nginx-alpine
+
+WORKDIR /var/www/html
+COPY --chown=www-data:www-data --from=deps /app .
+
+# Permisos para storage y bootstrap/cache (Laravel los necesita)
+RUN chown -R www-data:www-data storage bootstrap/cache \
+ && chmod -R ug+rwx storage bootstrap/cache
+
+# Optimizaciones de Laravel para arranque rápido en Fly/K8s.
+# Las variables de entorno de runtime se inyectan por el orquestador.
+ENV PHP_OPCACHE_ENABLE=1 \
+    LOG_CHANNEL=stderr \
+    APP_DEBUG=false \
+    APP_ENV=production
+
+# Health check: Laravel expone /up automáticamente.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD curl -fsS http://127.0.0.1/up || exit 1
+
+EXPOSE 80

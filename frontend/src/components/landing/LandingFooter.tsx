@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
+import { LocaleSwitcher } from "@/components/LocaleSwitcher";
+import { getServerLocale, t } from "@/lib/i18n";
 
-export function LandingFooter() {
+export async function LandingFooter() {
   const year = new Date().getFullYear();
+  const locale = await getServerLocale();
   return (
     <footer className="relative pt-16 sm:pt-24 pb-10 sm:pb-12 px-4 sm:px-6 border-t border-line-medium mt-16 sm:mt-24 bg-bg-paper/60">
       <div className="max-w-7xl mx-auto">
@@ -12,8 +15,7 @@ export function LandingFooter() {
               <Logo size={36} />
             </Link>
             <p className="font-display italic text-ink-2 text-lg mt-6 max-w-md leading-relaxed">
-              Software de barbería con identidad propia. Cada negocio merece una
-              herramienta que se sienta suya — desde el primer trazo.
+              {t("landing", "footer.tagline", locale)}
             </p>
           </div>
 
@@ -44,9 +46,16 @@ export function LandingFooter() {
         <hr className="hairline" />
 
         <div className="mt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-ink-muted">
-          <div>© {year} LUMIA. Hecho con tijera fina y mucho oficio.</div>
-          <div>
-            <span className="font-mono">v0.2.0 · multi-tenant · old money edition</span>
+          <div>© {year} LUMIA. {t("landing", "footer.copyright", locale)}</div>
+          <nav className="flex items-center gap-4">
+            <Link href="/terminos" className="hover-spread">{t("landing", "footer.legal.terms", locale)}</Link>
+            <Link href="/privacidad" className="hover-spread">{t("landing", "footer.legal.privacy", locale)}</Link>
+            <Link href="/cookies" className="hover-spread">{t("landing", "footer.legal.cookies", locale)}</Link>
+            <Link href="/affiliates" className="hover-spread">{t("landing", "footer.affiliates", locale)}</Link>
+          </nav>
+          <div className="flex items-center gap-3">
+            <LocaleSwitcher current={locale} />
+            <span className="font-mono">v0.3.0</span>
           </div>
         </div>
       </div>

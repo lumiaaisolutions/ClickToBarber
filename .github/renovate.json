@@ -1,0 +1,51 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base",
+    ":semanticCommits",
+    ":timezone(America/Mexico_City)",
+    ":automergePatch",
+    ":automergeMinor"
+  ],
+  "schedule": ["before 6am on monday"],
+  "labels": ["dependencies"],
+  "prHourlyLimit": 4,
+  "prConcurrentLimit": 8,
+  "vulnerabilityAlerts": {
+    "labels": ["security"],
+    "schedule": "at any time"
+  },
+  "packageRules": [
+    {
+      "matchManagers": ["composer"],
+      "matchPackagePatterns": ["laravel/.*"],
+      "groupName": "laravel framework"
+    },
+    {
+      "matchPackageNames": ["next", "react", "react-dom"],
+      "groupName": "next + react",
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "matchPackagePatterns": ["@types/.*"],
+      "groupName": "type definitions",
+      "automerge": true
+    },
+    {
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "automergeType": "branch",
+      "platformAutomerge": true
+    },
+    {
+      "matchUpdateTypes": ["pin", "digest"],
+      "automerge": true,
+      "platformAutomerge": true
+    },
+    {
+      "matchPackageNames": ["next", "react", "react-dom", "laravel/framework"],
+      "automerge": false,
+      "description": "Major frameworks: revisión humana siempre."
+    }
+  ]
+}

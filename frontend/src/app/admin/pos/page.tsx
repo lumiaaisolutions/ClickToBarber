@@ -1,71 +1,78 @@
-import { getDashboard, getProductsAdmin } from "@/lib/admin-api";
+import { getDashboard, getProductsAdmin, getMe } from "@/lib/admin-api";
 import { FeatureGate } from "@/components/FeatureGate";
-import { fmtCents } from "@/lib/utils";
-import { AlertTriangle } from "lucide-react";
+import { ProductsClient } from "@/components/admin/ProductsClient";
 
 export const dynamic = "force-dynamic";
 
 export default async function POSPage() {
-  const dash = await getDashboard().catch(() => null);
+  const [dash, me] = await Promise.all([
+    getDashboard().catch(() => null),
+    getMe().catch(() => null),
+  ]);
   const enabled = dash?.features.includes("pos_inventory") ?? false;
+  const canWrite = me?.user.can_write ?? false;
 
   let products: Awaited<ReturnType<typeof getProductsAdmin>> = [];
   if (enabled) {
-    try { products = await getProductsAdmin(); } catch {}
+    try {
+      products = await getProductsAdmin();
+    } catch {
+      products = [];
+    }
   } else {
     products = MOCK_PRODUCTS;
   }
 
   return (
-    <div className="space-y-5 sm:space-y-6">
-      <header>
-        <div className="text-xs uppercase tracking-[0.3em] text-accent mb-2">POS · Inventario</div>
-        <h1 className="font-display text-3xl sm:text-4xl">Productos</h1>
-        <p className="text-ink-2 text-sm mt-1">Cobra productos junto con servicios y mantén el stock al día.</p>
-      </header>
-
-      <FeatureGate
-        feature="pos_inventory"
-        enabled={enabled}
-        requiredPlan={dash ? "Pro" : null}
-        upgradeHref="/admin/billing"
-      >
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-          {products.map((p) => (
-            <div key={p.id} className="card-paper p-4 sm:p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h2 className="font-display text-base sm:text-lg truncate">{p.name}</h2>
-                  <div className="text-xs text-ink-muted font-mono mt-1">{p.sku}</div>
-                </div>
-                {p.low_stock && (
-                  <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-warning/15 text-warning border border-warning/30">
-                    <AlertTriangle size={10} /> Bajo stock
-                  </span>
-                )}
-              </div>
-              <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <div className="text-xs text-ink-muted uppercase tracking-wider">Precio</div>
-                  <div className="font-display text-xl text-accent tabular-nums">{fmtCents(p.price_cents, p.currency)}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-ink-muted uppercase tracking-wider">Stock</div>
-                  <div className="font-display text-xl tabular-nums">
-                    {p.stock} <span className="text-ink-muted text-xs">/ min {p.stock_min}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </FeatureGate>
-    </div>
+    <FeatureGate
+      feature="pos_inventory"
+      enabled={enabled}
+      requiredPlan={dash ? "Pro" : null}
+      upgradeHref="/admin/billing"
+    >
+      <ProductsClient initial={products} canWrite={canWrite && enabled} />
+    </FeatureGate>
   );
 }
 
 const MOCK_PRODUCTS = [
-  { id: 1, name: "Pomada Mate Pro",   sku: "POM-001", price_cents: 32000, currency: "MXN", stock: 24, stock_min: 5, low_stock: false, is_active: true },
-  { id: 2, name: "Aceite para barba", sku: "OIL-001", price_cents: 28000, currency: "MXN", stock: 18, stock_min: 5, low_stock: false, is_active: true },
-  { id: 3, name: "Cera fijación",     sku: "WAX-001", price_cents: 35000, currency: "MXN", stock:  3, stock_min: 4, low_stock: true,  is_active: true },
+  {
+    id: 1,
+    name: "Pomada Mate Pro",
+    sku: "POM-001",
+    description: "Fijación media, acabado mate.",
+    price_cents: 32000,
+    cost_cents: 14000,
+    currency: "MXN",
+    stock: 24,
+    stock_min: 5,
+    low_stock: false,
+    is_active: true,
+  },
+  {
+    id: 2,
+    name: "Aceite para barba",
+    sku: "OIL-001",
+    description: "Hidratación y brillo natural.",
+    price_cents: 28000,
+    cost_cents: 12000,
+    currency: "MXN",
+    stock: 18,
+    stock_min: 5,
+    low_stock: false,
+    is_active: true,
+  },
+  {
+    id: 3,
+    name: "Cera fijación",
+    sku: "WAX-001",
+    description: "Fijación fuerte, secado rápido.",
+    price_cents: 35000,
+    cost_cents: 16000,
+    currency: "MXN",
+    stock: 3,
+    stock_min: 4,
+    low_stock: true,
+    is_active: true,
+  },
 ];

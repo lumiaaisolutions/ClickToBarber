@@ -1,0 +1,57 @@
+# LUMIA · OpenTelemetry collector mínimo.
+#
+# Recibe traces / métricas / logs vía OTLP (gRPC y HTTP) y exporta a:
+#  - Tempo (traces)
+#  - Prometheus (métricas — pull desde /metrics)
+#  - Loki (logs)
+#
+# El backend Laravel NO emite OTLP nativo todavía (TODO: cablear
+# `open-telemetry/sdk` cuando se decida). Esta config queda pre-instalada
+# para que el día que se active, sólo haya que apuntar OTEL_EXPORTER_OTLP_ENDPOINT.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 10s
+    send_batch_size: 1024
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 256
+  resource:
+    attributes:
+      - key: service.namespace
+        value: lumia
+        action: upsert
+
+exporters:
+  otlphttp/tempo:
+    endpoint: http://tempo:4318
+  prometheus:
+    endpoint: 0.0.0.0:9464
+  loki:
+    endpoint: http://loki:3100/loki/api/v1/push
+
+service:
+  telemetry:
+    logs:
+      level: info
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [otlphttp/tempo]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [prometheus]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [loki]

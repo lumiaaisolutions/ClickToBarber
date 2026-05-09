@@ -5,7 +5,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "lint": "next lint",
+    "e2e": "playwright test",
+    "e2e:install": "playwright install chromium webkit",
+    "analyze": "ANALYZE=1 next build"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",
@@ -28,6 +32,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@playwright/test": "^1.48.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

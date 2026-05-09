@@ -5,10 +5,14 @@ import { API_BASE, AUTH_COOKIE, TENANT_COOKIE, type SessionPayload } from "@/lib
 /**
  * POST /api/auth/login (route handler de Next).
  *
- * Recibe { email, password }, llama al backend Laravel /api/auth/login,
- * y si el login es exitoso guarda el token Sanctum en una cookie httpOnly.
- * El navegador nunca ve el token; toda llamada server-side a /api/admin/*
- * lo forwardea automáticamente desde la cookie.
+ * Recibe { email, password } y reenvía al backend Laravel /api/auth/login.
+ * Dos posibles respuestas exitosas:
+ *
+ *   1) Login completo (sin 2FA): backend devuelve { token, user, tenant }.
+ *      Guardamos token en cookie httpOnly y devolvemos al cliente solo user+tenant.
+ *
+ *   2) 2FA requerido: backend devuelve { requires_2fa: true, login_token, email }.
+ *      NO guardamos cookie aún; pasamos el payload al cliente para que pida el TOTP.
  */
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -30,11 +34,22 @@ export async function POST(request: Request) {
     return NextResponse.json(data ?? { error: "login_failed" }, { status: upstream.status });
   }
 
+  // Caso 2: el backend pide segundo factor — sin cookie todavía.
+  if ((data as { requires_2fa?: boolean })?.requires_2fa) {
+    return NextResponse.json(data);
+  }
+
   const session = data as SessionPayload;
   if (!session?.token) {
     return NextResponse.json({ error: "no_token" }, { status: 502 });
   }
 
+  await persistSessionCookies(session);
+
+  return NextResponse.json({ user: session.user, tenant: session.tenant });
+}
+
+async function persistSessionCookies(session: SessionPayload) {
   const store = await cookies();
   const isProd = process.env.NODE_ENV === "production";
   const baseOpts = {
@@ -49,13 +64,12 @@ export async function POST(request: Request) {
   if (session.tenant?.slug) {
     store.set(TENANT_COOKIE, session.tenant.slug, { ...baseOpts, httpOnly: false });
   }
-
-  return NextResponse.json({
-    user: session.user,
-    tenant: session.tenant,
-  });
 }
 
 function safeParse(s: string): unknown {
-  try { return JSON.parse(s); } catch { return null; }
+  try {
+    return JSON.parse(s);
+  } catch {
+    return null;
+  }
 }

@@ -14,29 +14,82 @@ import {
   CircleDollarSign,
   Settings2,
   Palette,
+  Clock,
+  ShieldCheck,
+  ScrollText,
+  Sparkles,
+  UserPlus,
+  CalendarSync,
+  Globe,
   ExternalLink,
   LogOut,
   Menu,
   X,
+  Users2,
+  Ticket as TicketIcon,
+  Repeat,
+  Activity,
+  Star,
+  Webhook,
+  ImagePlus,
+  Wrench,
+  Crown,
+  Gift,
+  Lock,
+  Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CommandPalette } from "./CommandPalette";
+import { NotificationsBell } from "./NotificationsBell";
+import { DarkModeToggle } from "@/components/DarkModeToggle";
 
+/**
+ * Cada item declara qué permisos exige.
+ *  - `requireFinance`: solo visible si el user tiene can_see_finance.
+ *  - `requireWrite`: solo visible si el user tiene can_write (admin/manager/owner).
+ *  - `feature`: badge "PRO" — el FeatureGate del backend bloquea por plan.
+ *
+ * El backend ya bloquea con `role:` y `feature:` middleware; aquí solo
+ * escondemos los entries para no mostrar links que devolverían 403.
+ */
 const NAV = [
-  { href: "/admin",            label: "Dashboard",     icon: LayoutDashboard },
-  { href: "/admin/agenda",     label: "Agenda",        icon: CalendarDays },
+  { href: "/admin",            label: "Dashboard",     icon: LayoutDashboard, tour: "dashboard" },
+  { href: "/admin/agenda",     label: "Agenda",        icon: CalendarDays, tour: "agenda" },
   { href: "/admin/staff",      label: "Personal",      icon: Users },
-  { href: "/admin/services",   label: "Servicios",     icon: Scissors },
-  { href: "/admin/pos",        label: "POS · Inventario", icon: ShoppingBag, feature: "pos_inventory" as const },
+  { href: "/admin/services",   label: "Servicios",     icon: Scissors, tour: "services" },
+  { href: "/admin/business-hours", label: "Horarios",  icon: Clock, requireWrite: true },
+  { href: "/admin/walkin",     label: "Fila virtual",  icon: Users2 },
+  { href: "/admin/pos",        label: "POS · Inventario", icon: ShoppingBag, feature: "pos_inventory" as const, tour: "pos" },
+  { href: "/admin/operations", label: "Operación",     icon: Wrench, requireWrite: true },
+  { href: "/admin/pos/checkout", label: "POS · Cobrar", icon: ScrollText, feature: "pos_inventory" as const },
+  { href: "/admin/cash-close", label: "Cierre de caja", icon: Wallet, requireWrite: true, requireFinance: true },
   { href: "/admin/marketing",  label: "Marketing",     icon: Megaphone, feature: "marketing_retention" as const },
-  { href: "/admin/finance",    label: "Finanzas",      icon: CircleDollarSign, feature: "finance_reports" as const },
-  { href: "/admin/identity",   label: "Identidad",     icon: Palette },
-  { href: "/admin/billing",    label: "Suscripción",   icon: Settings2 },
-];
+  { href: "/admin/coupons",    label: "Cupones",       icon: TicketIcon, requireWrite: true },
+  { href: "/admin/giftcards",  label: "Gift cards",    icon: Gift, requireWrite: true },
+  { href: "/admin/memberships", label: "Membresías",   icon: Crown, requireWrite: true },
+  { href: "/admin/loyalty",    label: "Loyalty",       icon: Sparkles, requireWrite: true },
+  { href: "/admin/referrals",  label: "Referidos",     icon: UserPlus, requireWrite: true },
+  { href: "/admin/recurrences", label: "Recurrentes",  icon: Repeat, requireWrite: true },
+  { href: "/admin/ratings",    label: "Reseñas",       icon: Star, requireWrite: true },
+  { href: "/admin/gallery",    label: "Galería",       icon: ImagePlus, requireWrite: true },
+  { href: "/admin/insights",   label: "Insights",      icon: Activity },
+  { href: "/admin/finance",    label: "Finanzas",      icon: CircleDollarSign, feature: "finance_reports" as const, requireFinance: true },
+  { href: "/admin/identity",   label: "Identidad",     icon: Palette, requireWrite: true, tour: "identity" },
+  { href: "/admin/calendar",   label: "Calendario",    icon: CalendarSync },
+  { href: "/admin/domains",    label: "Dominios",      icon: Globe, requireWrite: true },
+  { href: "/admin/platform",   label: "API & Webhooks", icon: Webhook, requireWrite: true },
+  { href: "/admin/security/2fa", label: "Seguridad",   icon: ShieldCheck },
+  { href: "/admin/security/policy", label: "Política", icon: Lock, requireWrite: true },
+  { href: "/admin/audit",      label: "Bitácora",      icon: ScrollText, requireWrite: true },
+  { href: "/admin/billing",    label: "Suscripción",   icon: Settings2, requireWrite: true },
+] as const;
 
 interface AdminSidebarProps {
   userName: string;
   userEmail: string;
   userRole?: string;
+  canWrite?: boolean;
+  canSeeFinance?: boolean;
   tenantName?: string;
   tenantSlug: string | null;
 }
@@ -64,9 +117,11 @@ export function AdminSidebar(props: AdminSidebarProps) {
 
   return (
     <>
+      <CommandPalette />
+
       {/* Topbar móvil/tablet — visible <lg */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-30 h-14 px-4 flex items-center justify-between border-b border-line-fine bg-bg-canvas/85 backdrop-blur-md">
-        <Link href="/admin" className="flex items-center gap-2 text-primary">
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-30 h-14 px-4 flex items-center justify-between border-b border-line-fine bg-bg-canvas/85 backdrop-blur-md gap-2">
+        <Link href="/admin" className="flex items-center gap-2 text-primary min-w-0 flex-1">
           <Logo size={22} />
           {props.tenantName && (
             <span className="font-display italic text-ink text-base leading-none truncate max-w-[160px]">
@@ -74,15 +129,18 @@ export function AdminSidebar(props: AdminSidebarProps) {
             </span>
           )}
         </Link>
-        <button
-          type="button"
-          aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"}
-          aria-expanded={mobileOpen}
-          onClick={() => setMobileOpen((v) => !v)}
-          className="h-9 w-9 inline-flex items-center justify-center rounded-[10px] border border-line-medium text-ink-2 hover:text-primary hover:border-primary/40 transition"
-        >
-          {mobileOpen ? <X size={18} /> : <Menu size={18} />}
-        </button>
+        <div className="flex items-center gap-2">
+          <NotificationsBell />
+          <button
+            type="button"
+            aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={mobileOpen}
+            onClick={() => setMobileOpen((v) => !v)}
+            className="h-9 w-9 inline-flex items-center justify-center rounded-[10px] border border-line-medium text-ink-2 hover:text-primary hover:border-primary/40 transition"
+          >
+            {mobileOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
+        </div>
       </header>
 
       {/* Backdrop drawer móvil */}
@@ -112,6 +170,12 @@ export function AdminSidebar(props: AdminSidebarProps) {
       <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-[268px] flex-col border-r border-line-fine bg-bg-paper/85 backdrop-blur-md z-20">
         <SidebarContents {...props} />
       </aside>
+
+      {/* Topbar derecho desktop — bell + dark mode flotantes */}
+      <div className="hidden lg:flex fixed top-4 right-4 z-30 items-center gap-2">
+        <NotificationsBell />
+        <DarkModeToggle />
+      </div>
     </>
   );
 }
@@ -120,6 +184,8 @@ function SidebarContents({
   userName,
   userEmail,
   userRole,
+  canWrite = false,
+  canSeeFinance = false,
   tenantName,
   tenantSlug,
   onNavigate,
@@ -163,7 +229,11 @@ function SidebarContents({
       )}
 
       <nav className="flex-1 flex flex-col gap-1">
-        {NAV.map((item) => {
+        {NAV.filter((item) => {
+          if ("requireFinance" in item && item.requireFinance && !canSeeFinance) return false;
+          if ("requireWrite" in item && item.requireWrite && !canWrite) return false;
+          return true;
+        }).map((item) => {
           const Icon = item.icon;
           const active = pathname === item.href || (item.href !== "/admin" && pathname?.startsWith(item.href));
           return (
@@ -171,6 +241,7 @@ function SidebarContents({
               key={item.href}
               href={item.href}
               onClick={onNavigate}
+              data-tour={"tour" in item ? item.tour : undefined}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-sm transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
                 active
@@ -205,9 +276,17 @@ function SidebarContents({
         </div>
         <button
           type="button"
+          onClick={() => window.dispatchEvent(new Event("lumia:tour:open"))}
+          className="mt-3 w-full flex items-center gap-2 text-xs text-ink-2 hover:text-primary transition"
+        >
+          <Sparkles size={13} strokeWidth={1.6} />
+          <span>Ver tour de bienvenida</span>
+        </button>
+        <button
+          type="button"
           onClick={handleLogout}
           disabled={pending}
-          className="mt-3 w-full flex items-center gap-2 text-xs text-ink-2 hover:text-danger transition disabled:opacity-50"
+          className="mt-2 w-full flex items-center gap-2 text-xs text-ink-2 hover:text-danger transition disabled:opacity-50"
         >
           <LogOut size={13} strokeWidth={1.6} />
           <span>{pending ? "Cerrando sesión…" : "Cerrar sesión"}</span>

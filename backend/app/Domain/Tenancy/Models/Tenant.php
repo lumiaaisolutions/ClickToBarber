@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Tenancy\Models;
 
+use App\Domain\Audit\LoggableChanges;
 use App\Domain\Subscriptions\Models\Plan;
 use App\Domain\Staff\Models\Barber;
 use App\Domain\Catalog\Models\Service;
@@ -19,16 +20,17 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Tenant extends Model
 {
-    use HasUuids, HasFactory, SoftDeletes;
+    use HasFactory, HasUuids, LoggableChanges, SoftDeletes;
 
     protected $fillable = [
         'slug', 'name', 'owner_email', 'plan_id', 'plan_status', 'trial_ends_at',
-        'settings', 'timezone', 'phone', 'whatsapp_number',
+        'settings', 'security', 'timezone', 'phone', 'whatsapp_number',
         'address', 'latitude', 'longitude', 'cover_image_url', 'logo_url',
     ];
 
     protected $casts = [
         'settings'      => 'array',
+        'security'      => 'array',
         'trial_ends_at' => 'datetime',
         'latitude'      => 'float',
         'longitude'     => 'float',

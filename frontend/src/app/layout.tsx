@@ -3,6 +3,9 @@ import { Cormorant_Garamond, Inter_Tight, JetBrains_Mono } from "next/font/googl
 import "./globals.css";
 import { Preloader } from "@/components/Preloader";
 import { LenisProvider } from "@/components/LenisProvider";
+import { PwaRegister } from "@/components/PwaRegister";
+import { CookieConsentBanner } from "@/components/CookieConsentBanner";
+import { Analytics } from "@/components/Analytics";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -52,6 +55,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <LenisProvider>
           {children}
         </LenisProvider>
+        <PwaRegister />
+        <CookieConsentBanner />
+        <Analytics />
       </body>
     </html>
   );

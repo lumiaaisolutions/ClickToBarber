@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Tenancy\Models;
 
+use App\Domain\Audit\LoggableChanges;
 use App\Infrastructure\Persistence\Tenancy\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class TenantBranding extends Model
 {
-    use BelongsToTenant;
+    use BelongsToTenant, LoggableChanges;
 
     protected $table = 'tenant_branding';
 

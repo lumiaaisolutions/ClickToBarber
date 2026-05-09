@@ -1,0 +1,60 @@
+# LUMIA backend — configuración Fly.io.
+#
+# Antes de deploy:
+#   1. fly launch --no-deploy --copy-config (sólo la primera vez)
+#   2. fly secrets set APP_KEY="$(php artisan key:generate --show)" \
+#                      DB_HOST=... DB_DATABASE=... DB_USERNAME=... DB_PASSWORD=... \
+#                      REDIS_URL=... \
+#                      STRIPE_SECRET=... STRIPE_WEBHOOK_SECRET=... \
+#                      WHATSAPP_TOKEN=... META_WEBHOOK_SECRET=...
+#   3. fly deploy --dockerfile Dockerfile.prod
+#
+# La DB y Redis se provisionan aparte:
+#   fly postgres create --name lumia-db --region scl
+#   fly redis create   --name lumia-cache --region scl
+
+app   = "lumia-api"
+primary_region = "scl"
+
+[build]
+  dockerfile = "Dockerfile.prod"
+
+[env]
+  APP_ENV = "production"
+  APP_DEBUG = "false"
+  LOG_LEVEL = "warning"
+  LOG_CHANNEL = "stderr"
+  APP_URL = "https://api.lumia.app"
+  FRONTEND_URL = "https://lumia.app"
+  DB_CONNECTION = "pgsql"
+  CACHE_STORE = "redis"
+  QUEUE_CONNECTION = "redis"
+  SESSION_DRIVER = "redis"
+  SESSION_SECURE_COOKIE = "true"
+  SESSION_ENCRYPT = "true"
+  WHATSAPP_DRIVER = "meta"
+  STRIPE_DRIVER = "stripe"
+  SANCTUM_STATEFUL_DOMAINS = "lumia.app,api.lumia.app"
+  RATE_LIMIT_GLOBAL_PER_MIN = "200"
+
+[http_service]
+  internal_port = 80
+  force_https = true
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "20s"
+    method = "get"
+    path = "/up"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 512
+
+[deploy]
+  release_command = "php artisan migrate --force && php artisan config:cache && php artisan route:cache"

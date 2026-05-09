@@ -56,4 +56,6 @@ class Appointment extends Model
     {
         return $this->hasMany(AppointmentStatusHistory::class);
     }
+
+    // tenant() viene del trait BelongsToTenant
 }
