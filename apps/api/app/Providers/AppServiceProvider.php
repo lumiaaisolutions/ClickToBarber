@@ -23,6 +23,8 @@ class AppServiceProvider extends ServiceProvider
         Model::preventLazyLoading(! $this->app->isProduction());
         Model::preventSilentlyDiscardingAttributes(! $this->app->isProduction());
 
+        RateLimiter::for('login',   fn (Request $r) => Limit::perMinute(10)->by($r->ip()));
+        RateLimiter::for('booking', fn (Request $r) => Limit::perMinute(20)->by($r->ip()));
         RateLimiter::for('webhook', fn (Request $r) => Limit::perMinute(120)->by($r->ip()));
     }
 }
