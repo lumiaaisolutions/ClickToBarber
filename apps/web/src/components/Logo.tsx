@@ -1,13 +1,21 @@
 import { cn } from "@/lib/utils";
 
 /**
- * LUMIA — wordmark con tijera como punto de la "i".
- * El SVG hereda color de currentColor: úsalo con className="text-primary".
- * El grupo `.scissor` se anima en hover (apertura sutil de hojas).
+ * ClickToBarber — Logo identitario.
+ *
+ *  - `variant="wordmark"` (default): mark + "ClickToBarber" en Geist.
+ *  - `variant="mark"`: solo el símbolo cuadrado redondeado.
+ *
+ * El mark es un cuadrado con gradient azul→cyan, una "C" estilizada como
+ * silla de barbero invertida (curve top + base sólida) y una tijera
+ * abierta a la derecha — distintivo, no genérico.
+ *
+ * El SVG es 100% inline, sin dependencias externas, sin colores
+ * hardcoded en CSS (todo desde gradientes definidos en `<defs>`).
  */
 export function Logo({
   className,
-  size = 140,
+  size = 36,
   variant = "wordmark",
 }: {
   className?: string;
@@ -18,131 +26,114 @@ export function Logo({
     return <LogoMark className={className} size={size} />;
   }
 
-  const height = size;
-  const width = (size * 220) / 64; // 220:64 ≈ 3.44
+  const markSize = size;
+  const textSize = size * 0.6;
 
   return (
-    <svg
-      width={width}
-      height={height}
-      viewBox="0 0 220 64"
-      xmlns="http://www.w3.org/2000/svg"
-      className={cn("block lumia-logo", className)}
+    <div
+      className={cn("inline-flex items-center gap-2.5 leading-none", className)}
       role="img"
-      aria-label="LUMIA"
-      style={{ overflow: "visible" }}
+      aria-label="ClickToBarber"
     >
-      <text
-        x="0"
-        y="50"
-        fontFamily="var(--font-cormorant), 'Cormorant Garamond', Garamond, Georgia, serif"
-        fontSize="56"
-        fontWeight="500"
-        fontStyle="italic"
-        fill="currentColor"
-        letterSpacing="0.02em"
+      <LogoMark size={markSize} />
+      <span
+        className="font-semibold tracking-tight whitespace-nowrap leading-none"
+        style={{
+          fontSize: textSize,
+          letterSpacing: "-0.025em",
+          color: "currentColor",
+        }}
       >
-        lum
-        {/* trazo vertical de la "i" sin punto: usamos tspan invisible para reservar ancho */}
-        <tspan dx="0" style={{ letterSpacing: "0.02em" }}>ı</tspan>
-        a
-      </text>
-
-      {/* Tijera diminuta como punto de la "i" */}
-      <g
-        className="scissor"
-        transform="translate(102 12) rotate(-12)"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        {/* Mangos (anillos) */}
-        <circle cx="-3.2" cy="0" r="2.4" />
-        <circle cx="3.2"  cy="0" r="2.4" />
-        {/* Hojas cruzadas */}
-        <path d="M -1.4 1.6 L 6.5 9.2" />
-        <path d="M 1.4 1.6 L -6.5 9.2" />
-        {/* Pivote */}
-        <circle cx="0" cy="3.4" r="0.6" fill="currentColor" stroke="none" />
-      </g>
-
-      <style>{`
-        .lumia-logo .scissor {
-          transform-origin: 102px 16px;
-          transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .lumia-logo:hover .scissor {
-          transform: translate(102px, 12px) rotate(2deg);
-        }
-      `}</style>
-    </svg>
+        Click<span style={{ color: "var(--md-primary, #C4922A)" }}>To</span>Barber
+      </span>
+    </div>
   );
 }
 
-/** Marca compacta — solo la tijera. Para favicons, sidebar colapsado, app icons. */
 export function LogoMark({
   className,
-  size = 48,
+  size = 36,
 }: {
   className?: string;
   size?: number;
 }) {
+  // ID único por mount para evitar colisiones de gradient cuando hay
+  // múltiples instancias en la misma página.
+  const uid = `ctb-${Math.random().toString(36).slice(2, 9)}`;
+
   return (
     <svg
       width={size}
       height={size}
       viewBox="0 0 64 64"
       xmlns="http://www.w3.org/2000/svg"
-      className={cn("block", className)}
+      className={cn("block shrink-0", className)}
       role="img"
-      aria-label="LUMIA"
+      aria-label="ClickToBarber"
     >
-      {/* Anillo decorativo */}
-      <circle
-        cx="32"
-        cy="32"
-        r="29"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="0.8"
-        opacity="0.4"
+      <defs>
+        {/* Gradient oro → madera, idéntico al sistema --cb-gradient */}
+        <linearGradient id={`${uid}-bg`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#C4922A" />
+          <stop offset="100%" stopColor="#8B5A2B" />
+        </linearGradient>
+        {/* Sombra interna sutil */}
+        <linearGradient id={`${uid}-shine`} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.18" />
+          <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
+        </linearGradient>
+        <filter id={`${uid}-shadow`} x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="2" stdDeviation="2.5" floodColor="#8B5A2B" floodOpacity="0.30" />
+        </filter>
+      </defs>
+
+      {/* Cuadrado redondeado con gradient */}
+      <rect
+        x="2"
+        y="2"
+        width="60"
+        height="60"
+        rx="18"
+        ry="18"
+        fill={`url(#${uid}-bg)`}
+        filter={`url(#${uid}-shadow)`}
       />
 
+      {/* Shine top — gloss sutil */}
+      <rect x="2" y="2" width="60" height="60" rx="18" ry="18" fill={`url(#${uid}-shine)`} />
+
+      {/* ─── ÍCONO COMPUESTO: Silla de barbero estilizada + tijera ─── */}
+
+      {/* Silla — base + respaldo curvo blanco translúcido grande */}
+      <g stroke="white" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.95">
+        {/* Respaldo (arc) */}
+        <path d="M 18 38 Q 18 18, 32 18 Q 46 18, 46 38" />
+        {/* Asiento horizontal */}
+        <line x1="16" y1="38" x2="48" y2="38" />
+        {/* Pata central */}
+        <line x1="32" y1="38" x2="32" y2="48" />
+        {/* Base inferior */}
+        <path d="M 22 48 L 42 48" />
+      </g>
+
+      {/* Tijera abierta — esquina inferior derecha, accent dorado */}
       <g
-        transform="translate(32 22)"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.2"
+        transform="translate(46 46) rotate(-20)"
+        stroke="white"
+        strokeWidth="1.8"
+        fill="white"
         strokeLinecap="round"
         strokeLinejoin="round"
       >
-        {/* Mangos */}
-        <circle cx="-7" cy="0" r="5.5" />
-        <circle cx="7"  cy="0" r="5.5" />
+        {/* Anillos */}
+        <circle cx="-2.5" cy="0" r="2.2" fill="white" fillOpacity="0.25" stroke="white" strokeWidth="1.6" />
+        <circle cx="2.5" cy="0" r="2.2" fill="white" fillOpacity="0.25" stroke="white" strokeWidth="1.6" />
         {/* Hojas cruzadas */}
-        <path d="M -3.4 3.6 L 14 22" />
-        <path d="M 3.4 3.6 L -14 22" />
+        <line x1="-1.2" y1="1.4" x2="6" y2="8" stroke="white" strokeWidth="1.8" fill="none" />
+        <line x1="1.2" y1="1.4" x2="-6" y2="8" stroke="white" strokeWidth="1.8" fill="none" />
         {/* Pivote */}
-        <circle cx="0" cy="7" r="1.4" fill="currentColor" stroke="none" />
+        <circle cx="0" cy="3" r="0.7" fill="white" stroke="none" />
       </g>
-
-      {/* Detalle: monograma "L" sutil debajo */}
-      <text
-        x="32"
-        y="58"
-        textAnchor="middle"
-        fontFamily="var(--font-cormorant), 'Cormorant Garamond', Garamond, serif"
-        fontSize="8"
-        fontStyle="italic"
-        fontWeight="600"
-        fill="currentColor"
-        opacity="0.85"
-        letterSpacing="0.4em"
-      >
-        LUMIA
-      </text>
     </svg>
   );
 }

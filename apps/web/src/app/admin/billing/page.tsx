@@ -1,6 +1,7 @@
 import { api, type Plan } from "@/lib/api";
 import { getDashboard } from "@/lib/admin-api";
-import { Check, Lock, Sparkles } from "lucide-react";
+import { Check, Lock, Sparkles, Clock } from "lucide-react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -20,24 +21,67 @@ const ALL_FEATURES: Record<string, string> = {
 export default async function BillingPage() {
   let plans: Plan[] = [];
   let currentPlan: string | null = null;
+  let planStatus: string | null = null;
+  let trialEndsAt: string | null = null;
   try {
     plans = await api<Plan[]>("/billing/plans");
     const dash = await getDashboard();
     currentPlan = dash.tenant.plan;
+    planStatus = dash.tenant.plan_status ?? null;
+    trialEndsAt = dash.tenant.trial_ends_at ?? null;
   } catch {}
+
+  const isTrialing = planStatus === "trialing";
+  let trialDaysLeft = 0;
+  let trialEndDate = "";
+  if (isTrialing && trialEndsAt) {
+    const endsAt = new Date(trialEndsAt);
+    const diff = endsAt.getTime() - Date.now();
+    trialDaysLeft = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+    trialEndDate = endsAt.toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" });
+  }
 
   return (
     <div className="space-y-6 sm:space-y-8">
       <header>
-        <div className="text-xs uppercase tracking-[0.3em] text-accent mb-2">Suscripción</div>
-        <h1 className="font-display text-3xl sm:text-4xl">Tu plan</h1>
-        <p className="text-ink-2 text-sm mt-1">
-          Estás en el plan <span className="text-accent-2 font-medium uppercase">{currentPlan ?? "—"}</span>.
-          Cambia cuando quieras, sin sorpresas.
+        <div className="text-xs font-semibold uppercase tracking-wider text-accent-3 mb-3">Tu plan</div>
+        <h1 className="font-display font-bold tracking-tight text-3xl sm:text-4xl text-ink">Mi plan</h1>
+        <p className="text-ink-2 text-sm mt-3">
+          Estás en <span className="text-primary font-semibold uppercase">{currentPlan ?? "—"}</span>.
+          Cambia cuando quieras. Sin contratos.
         </p>
       </header>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      {isTrialing && (
+        <div className="p-5 sm:p-6 rounded-2xl border border-amber-300/70 bg-amber-50/90">
+          <div className="flex items-start gap-4">
+            <div className="p-2.5 rounded-xl bg-amber-100 text-amber-700 shrink-0">
+              <Clock size={20} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-semibold uppercase tracking-wider text-amber-700 mb-1">Prueba gratuita activa</div>
+              <div className="font-display font-bold text-2xl text-amber-900 leading-tight">
+                {trialDaysLeft > 0 ? `${trialDaysLeft} día${trialDaysLeft !== 1 ? "s" : ""} restantes` : "Tu prueba ha vencido"}
+              </div>
+              {trialEndDate && (
+                <p className="text-sm text-amber-800 mt-1">Tu prueba termina el {trialEndDate}.</p>
+              )}
+              <div className="mt-3 h-2 bg-amber-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full"
+                  style={{ width: `${Math.round(((15 - trialDaysLeft) / 15) * 100)}%` }}
+                />
+              </div>
+              <div className="text-xs text-amber-700 mt-1.5">{15 - trialDaysLeft} de 15 días usados</div>
+            </div>
+            <Link href="#plans" className="btn btn-primary text-sm shrink-0">
+              Activar plan ahora
+            </Link>
+          </div>
+        </div>
+      )}
+
+      <div id="plans" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {plans.map((p) => {
           const isCurrent = p.code === currentPlan;
           return (

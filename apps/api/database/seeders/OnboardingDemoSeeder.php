@@ -28,7 +28,7 @@ class OnboardingDemoSeeder extends Seeder
                 'owner_email'     => 'admin@marfil.test',
                 'plan_id'         => $plan->id,
                 'plan_status'     => 'trial',
-                'trial_ends_at'   => now()->addDays(14),
+                'trial_ends_at'   => now()->addDays(15),
                 'timezone'        => 'America/Mexico_City',
                 'phone'           => null,
                 'whatsapp_number' => null,

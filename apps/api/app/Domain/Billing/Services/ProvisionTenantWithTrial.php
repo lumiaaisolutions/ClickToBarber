@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Wrapper sobre ProvisionTenant que añade:
- *  - free trial 14 días (`tenants.trial_ends_at`).
+ *  - free trial 15 días (`tenants.trial_ends_at`).
  *  - tracking de affiliate referral si viene en `?aff=`.
  */
 final class ProvisionTenantWithTrial
@@ -32,7 +32,7 @@ final class ProvisionTenantWithTrial
      */
     public function execute(array $data): Tenant
     {
-        $trialDays = (int) ($data['trial_days'] ?? 14);
+        $trialDays = (int) ($data['trial_days'] ?? env('TRIAL_MANUAL_DAYS', 15));
         $affiliateCode = $data['affiliate_code'] ?? null;
 
         $tenant = $this->base->execute($data);

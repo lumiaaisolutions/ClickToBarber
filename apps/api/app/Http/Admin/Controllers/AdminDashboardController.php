@@ -42,10 +42,12 @@ final class AdminDashboardController
 
         return [
             'tenant' => [
-                'id'   => $tenant->id,
-                'name' => $tenant->name,
-                'slug' => $tenant->slug,
-                'plan' => $tenant->plan?->code,
+                'id'           => $tenant->id,
+                'name'         => $tenant->name,
+                'slug'         => $tenant->slug,
+                'plan'         => $tenant->plan?->code,
+                'plan_status'  => $tenant->plan_status,
+                'trial_ends_at'=> $tenant->trial_ends_at?->toIso8601String(),
             ],
             'kpis' => [
                 'today_appointments'  => $todayAppointments,

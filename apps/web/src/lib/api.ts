@@ -150,7 +150,7 @@ export interface DashboardKpis {
 }
 
 export interface DashboardResponse {
-  tenant: { id: string; name: string; slug: string; plan: PlanCode | null };
+  tenant: { id: string; name: string; slug: string; plan: PlanCode | null; plan_status: string | null; trial_ends_at: string | null };
   kpis: DashboardKpis;
   features: string[];
 }
