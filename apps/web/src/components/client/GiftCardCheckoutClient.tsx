@@ -84,7 +84,7 @@ export function GiftCardCheckoutClient({ slug, tenantName }: { slug: string; ten
   return (
     <form onSubmit={submit} className="space-y-6">
       <section className="card-paper p-5 sm:p-7 space-y-4">
-        <h2 className="font-display italic text-xl text-ink flex items-center gap-2">
+        <h2 className="font-display font-bold tracking-tight text-xl text-ink flex items-center gap-2">
           <Gift size={18} className="text-accent" /> Monto
         </h2>
         <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
@@ -109,7 +109,7 @@ export function GiftCardCheckoutClient({ slug, tenantName }: { slug: string; ten
             type="button"
             onClick={() => setCustomMode((v) => !v)}
             className={cn(
-              "text-xs tracking-imperial border px-3 py-2 rounded-[8px] transition",
+              "text-xs font-semibold uppercase tracking-wider border px-3 py-2 rounded-[8px] transition",
               customMode ? "border-primary text-primary bg-primary/5" : "border-line-medium text-ink-2 hover:border-primary/40",
             )}
           >
@@ -117,7 +117,7 @@ export function GiftCardCheckoutClient({ slug, tenantName }: { slug: string; ten
           </button>
           {customMode && (
             <div className="flex-1">
-              <label className="text-[10px] tracking-imperial text-ink-muted block mb-1">
+              <label className="text-xs font-semibold uppercase tracking-wider text-ink-muted block mb-1">
                 Monto en MXN (mín. 50, máx. 50,000)
               </label>
               <input
@@ -136,19 +136,19 @@ export function GiftCardCheckoutClient({ slug, tenantName }: { slug: string; ten
 
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="card-paper p-5 sm:p-6 space-y-3">
-          <h2 className="font-display italic text-lg text-ink">Tus datos</h2>
+          <h2 className="font-display font-bold tracking-tight text-lg text-ink">Tus datos</h2>
           <Field label="Nombre" value={senderName} onChange={setSenderName} error={errors.sender_name} />
           <Field label="Email" type="email" value={senderEmail} onChange={setSenderEmail} error={errors.sender_email} />
         </div>
         <div className="card-paper p-5 sm:p-6 space-y-3">
-          <h2 className="font-display italic text-lg text-ink">Quien recibe</h2>
+          <h2 className="font-display font-bold tracking-tight text-lg text-ink">Quien recibe</h2>
           <Field label="Nombre" value={recipientName} onChange={setRecipientName} error={errors.recipient_name} />
           <Field label="Email" type="email" value={recipientEmail} onChange={setRecipientEmail} error={errors.recipient_email} placeholder="Le mandaremos el código aquí" />
         </div>
       </section>
 
       <section className="card-paper p-5 sm:p-6">
-        <label className="text-[10px] tracking-imperial text-ink-muted block mb-1.5">
+        <label className="text-xs font-semibold uppercase tracking-wider text-ink-muted block mb-1.5">
           Mensaje (opcional, máx. 500 caracteres)
         </label>
         <textarea
@@ -156,7 +156,7 @@ export function GiftCardCheckoutClient({ slug, tenantName }: { slug: string; ten
           onChange={(e) => setMessage(e.target.value)}
           maxLength={500}
           rows={3}
-          placeholder="Feliz cumpleaños, mereces consentirte ✨"
+          placeholder="Feliz cumpleaños, mereces consentirte"
           className="input-boxed w-full resize-none"
         />
         {errors.message && <p className="text-xs text-danger mt-1">{errors.message}</p>}
@@ -170,7 +170,7 @@ export function GiftCardCheckoutClient({ slug, tenantName }: { slug: string; ten
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 card-paper p-5">
         <div>
-          <div className="text-[10px] tracking-imperial text-ink-muted">Total a pagar</div>
+          <div className="text-xs font-semibold uppercase tracking-wider text-ink-muted">Total a pagar</div>
           <div className="font-display text-3xl text-primary">{fmtCents(valueCents)}</div>
         </div>
         <button
@@ -196,7 +196,7 @@ function Field({
 }: { label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string; error?: string }) {
   return (
     <div>
-      <label className="text-[10px] tracking-imperial text-ink-muted block mb-1.5">{label}</label>
+      <label className="text-xs font-semibold uppercase tracking-wider text-ink-muted block mb-1.5">{label}</label>
       <input
         type={type}
         value={value}

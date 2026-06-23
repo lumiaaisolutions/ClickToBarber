@@ -35,23 +35,14 @@ export default async function AdminLoginPage() {
           </Link>
 
           <div className="mb-8 text-center">
-            <div className="text-[10px] uppercase tracking-imperial text-accent-3 mb-3">Portal Admin</div>
-            <h1 className="font-display italic text-3xl text-ink">Bienvenido de vuelta</h1>
+            <div className="text-xs font-semibold uppercase tracking-wider text-accent-3 mb-3">Portal Admin</div>
+            <h1 className="font-display font-bold tracking-tight text-3xl text-ink">Bienvenido de vuelta</h1>
             <p className="text-ink-2 text-sm mt-2 leading-relaxed">
               Ingresa con la cuenta del administrador de la barbería.
             </p>
           </div>
 
           <LoginForm />
-
-          <hr className="hairline my-6" />
-
-          <div className="text-xs text-ink-muted text-center">
-            <span className="text-ink-2">Demo:</span>{" "}
-            <span className="font-mono text-primary">admin@elnavajazo.test</span>{" "}
-            <span className="text-ink-muted">/</span>{" "}
-            <span className="font-mono text-primary">password</span>
-          </div>
         </div>
 
         <div className="mt-8 text-center text-xs text-ink-muted">

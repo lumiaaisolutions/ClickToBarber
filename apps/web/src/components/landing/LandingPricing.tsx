@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Check, ArrowUpRight } from "lucide-react";
+import { Check, ArrowUpRight, Scissors } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import type { Plan } from "@/lib/api";
@@ -85,7 +85,7 @@ export function LandingPricing({ plans }: { plans: Plan[] }) {
           className="flex justify-center mb-6 sm:mb-8"
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-amber-300/60 bg-amber-50 text-amber-800 text-xs font-semibold">
-            <span className="text-base">✂️</span>
+            <Scissors size={14} strokeWidth={2} />
             <span>15 días de prueba gratis en cualquier plan — sin tarjeta al inicio</span>
           </div>
         </motion.div>
@@ -181,7 +181,7 @@ function PricingCard({
         <h3 className="font-display font-bold tracking-tight text-2xl sm:text-3xl text-ink leading-tight">{plan.name}</h3>
         {!isFree && (
           <div className="mt-2 mb-1 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200">
-            ✂️ 15 días gratis
+            <Scissors size={10} strokeWidth={2} /> 15 días gratis
           </div>
         )}
         <p className="text-xs sm:text-sm text-ink-2 mt-1.5 leading-snug sm:min-h-[40px]">{tagline}</p>

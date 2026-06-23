@@ -165,8 +165,8 @@
   --color-line-medium:       var(--md-outline);
   --color-line-strong:       #BDC1C6;
 
-  --font-sans:    var(--font-geist), system-ui, -apple-system, sans-serif;
-  --font-display: var(--font-geist), system-ui, -apple-system, sans-serif;
+  --font-sans:    var(--font-raleway), system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-playfair), Georgia, "Times New Roman", serif;
   --font-mono:    ui-monospace, "SF Mono", "Cascadia Code", monospace;
 }
 
@@ -175,8 +175,8 @@
 html, body {
   background: var(--md-surface-dim);
   color: var(--md-on-surface);
-  font-family: var(--font-geist), system-ui, -apple-system, sans-serif;
-  font-feature-settings: "ss01", "cv11";
+  font-family: var(--font-raleway), system-ui, -apple-system, sans-serif;
+  font-feature-settings: "kern", "liga";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior-y: none;
@@ -211,16 +211,15 @@ body { min-height: 100vh; }
    Tipografía — Material 3 type scale
    ========================================================= */
 .font-display {
-  font-family: var(--font-geist), system-ui, sans-serif;
-  font-weight: 600;
-  letter-spacing: -0.022em;
+  font-family: var(--font-playfair), Georgia, "Times New Roman", serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
-/* Opt-in elegante (solo para impact numbers tipo "24/7", "-87%", "+34%") */
 .font-serif-italic {
-  font-family: var(--font-instrument), "Instrument Serif", Georgia, serif;
+  font-family: var(--font-playfair), Georgia, serif;
   font-style: italic;
   font-weight: 400;
-  letter-spacing: -0.015em;
+  letter-spacing: -0.01em;
 }
 .font-mono { font-family: ui-monospace, "SF Mono", "Cascadia Code", monospace; font-feature-settings: "tnum"; }
 
@@ -321,7 +320,7 @@ body { min-height: 100vh; }
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
   border-radius: var(--radius-pill);
-  font-family: var(--font-geist), system-ui, sans-serif;
+  font-family: var(--font-raleway), system-ui, sans-serif;
   font-weight: 600;
   font-size: 0.9375rem;
   letter-spacing: 0.005em;
@@ -419,7 +418,7 @@ body { min-height: 100vh; }
   padding-bottom: 0.875rem;
   padding-left: 1rem;
   padding-right: 1rem;
-  font-family: var(--font-geist), system-ui, sans-serif;
+  font-family: var(--font-raleway), system-ui, sans-serif;
   font-size: 1rem;
   font-weight: 500;
   color: var(--md-on-surface);
@@ -487,7 +486,7 @@ body { min-height: 100vh; }
 }
 .table-clean th {
   text-align: left;
-  font-family: var(--font-geist), sans-serif;
+  font-family: var(--font-raleway), sans-serif;
   font-weight: 600;
   font-size: 0.8125rem;
   color: var(--md-on-surface-variant);
@@ -520,7 +519,7 @@ body { min-height: 100vh; }
    Sileo toasts — Material 3 surface
    ========================================================= */
 [data-sileo-viewport] [data-sileo-title] {
-  font-family: var(--font-geist), system-ui, sans-serif;
+  font-family: var(--font-raleway), system-ui, sans-serif;
   font-weight: 600;
   text-transform: none !important;
   font-size: 0.875rem;
@@ -528,7 +527,7 @@ body { min-height: 100vh; }
   color: var(--md-on-surface) !important;
 }
 [data-sileo-viewport] [data-sileo-description] {
-  font-family: var(--font-geist), system-ui, sans-serif;
+  font-family: var(--font-raleway), system-ui, sans-serif;
   color: var(--md-on-surface-variant) !important;
   font-size: 0.875rem;
   line-height: 1.4;
