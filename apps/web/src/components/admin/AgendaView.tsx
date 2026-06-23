@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { Clock, User, Scissors } from "lucide-react";
+import { Clock, User, Scissors, Check } from "lucide-react";
 import type { AppointmentDto } from "@/lib/api";
 import { cn, fmtCents, fmtTime } from "@/lib/utils";
 
@@ -74,7 +74,7 @@ export function AgendaView({ appointments }: { appointments: AppointmentDto[] })
                       </span>
                       <div className="font-display text-base sm:text-lg text-accent mt-2">{fmtCents(a.price_cents)}</div>
                       {a.deposit_status === "captured" && (
-                        <div className="text-[10px] text-success">Depósito {fmtCents(a.deposit_cents)} ✓</div>
+                        <div className="text-[10px] text-success flex items-center gap-0.5">Depósito {fmtCents(a.deposit_cents)} <Check size={10} strokeWidth={2.5} /></div>
                       )}
                       {a.deposit_status === "forfeited" && (
                         <div className="text-[10px] text-danger">Depósito retenido</div>

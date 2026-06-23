@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ArrowRight, Loader2 } from "lucide-react";
+import { X, ArrowRight, Loader2, User, Building2, Mail } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface Props {
@@ -13,12 +13,6 @@ interface Props {
   priceLabel: string;
 }
 
-/**
- * Modal de checkout — recoge email + nombre del negocio y arranca Stripe.
- *
- * Si el backend está en STRIPE_DRIVER=mock devuelve una URL fake con
- * ?mock=1 que la página /checkout/success interpreta como demo.
- */
 export function CheckoutDialog({
   open,
   onClose,
@@ -27,10 +21,11 @@ export function CheckoutDialog({
   billingCycle,
   priceLabel,
 }: Props) {
-  const [email, setEmail] = useState("");
+  const [ownerName, setOwnerName]       = useState("");
   const [businessName, setBusinessName] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [email, setEmail]               = useState("");
+  const [loading, setLoading]           = useState(false);
+  const [error, setError]               = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -39,14 +34,15 @@ export function CheckoutDialog({
     }
     if (open) {
       document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = "";
-      };
+      return () => { document.body.style.overflow = ""; };
     }
   }, [open]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!ownerName.trim())    { setError("Tu nombre es requerido."); return; }
+    if (!businessName.trim()) { setError("El nombre de la barbería es requerido."); return; }
+    if (!email.trim())        { setError("Tu email es requerido."); return; }
     setError(null);
     setLoading(true);
 
@@ -55,10 +51,11 @@ export function CheckoutDialog({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          plan: planSlug,
+          plan:          planSlug,
           billing_cycle: billingCycle,
-          email: email.trim(),
+          owner_name:    ownerName.trim(),
           business_name: businessName.trim(),
+          email:         email.trim(),
         }),
       });
 
@@ -66,8 +63,9 @@ export function CheckoutDialog({
       if (!res.ok || !data?.url) {
         setError(
           data?.errors?.email?.[0] ??
-            data?.message ??
-            "No pudimos iniciar el checkout. Inténtalo de nuevo.",
+          data?.errors?.business_name?.[0] ??
+          data?.message ??
+          "No pudimos iniciar el checkout. Inténtalo de nuevo.",
         );
         setLoading(false);
         return;
@@ -108,21 +106,40 @@ export function CheckoutDialog({
               <X size={18} />
             </button>
 
-            <div className="text-[10px] tracking-imperial text-accent-3 mb-2">
+            {/* Header */}
+            <div className="text-xs font-semibold uppercase tracking-wider text-accent-3 mb-1.5">
               Plan {planName}
             </div>
-            <h3 className="font-display italic text-3xl text-ink mb-1">
-              Activa tu cuenta.
+            <h3 className="font-display font-bold tracking-tight text-2xl sm:text-3xl text-ink mb-1">
+              Crea tu cuenta.
             </h3>
             <p className="text-sm text-ink-2 mb-6">
               {priceLabel} ·{" "}
-              {billingCycle === "yearly" ? "Facturación anual" : "Facturación mensual"}
+              {billingCycle === "yearly" ? "Facturación anual" : "Mensual"} · 15 días gratis
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Tu nombre */}
               <div>
-                <label className="block text-xs tracking-noble text-ink-2 mb-1.5">
-                  Nombre de la barbería
+                <label className="block text-xs tracking-noble text-ink-2 mb-1.5 flex items-center gap-1.5">
+                  <User size={11} className="text-ink-muted" /> Tu nombre
+                </label>
+                <input
+                  type="text"
+                  required
+                  minLength={2}
+                  maxLength={80}
+                  value={ownerName}
+                  onChange={(e) => setOwnerName(e.target.value)}
+                  className="input-boxed w-full"
+                  placeholder="Ej. Carlos Mendoza"
+                />
+              </div>
+
+              {/* Nombre del negocio */}
+              <div>
+                <label className="block text-xs tracking-noble text-ink-2 mb-1.5 flex items-center gap-1.5">
+                  <Building2 size={11} className="text-ink-muted" /> Nombre de la barbería
                 </label>
                 <input
                   type="text"
@@ -135,9 +152,11 @@ export function CheckoutDialog({
                   placeholder="Ej. Marfil Avenue"
                 />
               </div>
+
+              {/* Email */}
               <div>
-                <label className="block text-xs tracking-noble text-ink-2 mb-1.5">
-                  Email del administrador
+                <label className="block text-xs tracking-noble text-ink-2 mb-1.5 flex items-center gap-1.5">
+                  <Mail size={11} className="text-ink-muted" /> Email del administrador
                 </label>
                 <input
                   type="email"
@@ -148,8 +167,7 @@ export function CheckoutDialog({
                   placeholder="tu@correo.com"
                 />
                 <p className="text-[11px] text-ink-muted mt-1.5 leading-snug">
-                  Usaremos este correo para enviarte el enlace seguro de
-                  activación tras confirmar el pago.
+                  Te enviaremos el enlace de activación a este correo tras confirmar el pago.
                 </p>
               </div>
 
@@ -165,18 +183,14 @@ export function CheckoutDialog({
                 className="btn btn-primary w-full justify-center mt-2"
               >
                 {loading ? (
-                  <>
-                    <Loader2 size={14} className="animate-spin" /> Conectando con Stripe…
-                  </>
+                  <><Loader2 size={14} className="animate-spin" /> Conectando con Stripe…</>
                 ) : (
-                  <>
-                    Continuar al pago <ArrowRight size={14} />
-                  </>
+                  <>Continuar al pago <ArrowRight size={14} /></>
                 )}
               </button>
 
-              <p className="text-[11px] text-ink-muted text-center pt-2 leading-relaxed">
-                Pago seguro vía Stripe. Sin permanencia. Cancela cuando quieras.
+              <p className="text-[11px] text-ink-muted text-center pt-1 leading-relaxed">
+                Pago seguro vía Stripe · Sin permanencia · Cancela cuando quieras
               </p>
             </form>
           </motion.div>

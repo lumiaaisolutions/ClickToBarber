@@ -346,6 +346,6 @@ function drawWhatsApp(ctx: CanvasRenderingContext2D, x: number, y: number, w: nu
   ctx.font = `700 ${Math.round(w * 0.055)}px "Sora", system-ui, sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText("¡Listo! ✓", x + w / 2, sealY + w * 0.08);
+  ctx.fillText("¡Listo!", x + w / 2, sealY + w * 0.08);
   ctx.textBaseline = "alphabetic";
 }

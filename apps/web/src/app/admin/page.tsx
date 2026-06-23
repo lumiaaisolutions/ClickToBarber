@@ -1,4 +1,4 @@
-import { Calendar, TrendingUp, DollarSign, Users, UserMinus, Sparkles, ArrowRight, Clock } from "lucide-react";
+import { Calendar, TrendingUp, DollarSign, Users, UserMinus, Sparkles, ArrowRight, Clock, Lock } from "lucide-react";
 import { StatCard } from "@/components/ui/StatCard";
 import { getDashboard } from "@/lib/admin-api";
 import { Card, CardSubtitle, CardTitle, CardEyebrow } from "@/components/ui/Card";
@@ -40,11 +40,35 @@ export default async function AdminDashboardPage() {
   const cloudEnabled = (data as { whatsapp_driver?: string }).whatsapp_driver === "cloud";
 
   const isTrialing = data.tenant.plan_status === "trialing";
+  const isExpired = data.tenant.plan_status === "canceled" || data.tenant.plan_status === "past_due" ||
+    (isTrialing && data.tenant.trial_ends_at && new Date(data.tenant.trial_ends_at) < new Date());
   let trialDaysLeft = 0;
   if (isTrialing && data.tenant.trial_ends_at) {
     const endsAt = new Date(data.tenant.trial_ends_at);
     const diff = endsAt.getTime() - Date.now();
     trialDaysLeft = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  }
+
+  if (isExpired) {
+    return (
+      <div className="min-h-[70vh] flex items-center justify-center">
+        <div className="text-center max-w-md px-6">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-100 text-amber-600 mb-6">
+            <Lock size={28} />
+          </div>
+          <div className="text-xs font-semibold uppercase tracking-wider text-amber-600 mb-3">Prueba terminada</div>
+          <h2 className="font-display font-bold tracking-tight text-3xl text-ink mb-3 leading-tight">
+            Tu período de prueba ha concluido
+          </h2>
+          <p className="text-ink-2 text-sm leading-relaxed mb-8">
+            Para seguir usando ClickToBarber activa uno de nuestros planes. Sin permanencia, cancela cuando quieras.
+          </p>
+          <Link href="/admin/billing" className="btn btn-primary inline-flex items-center gap-2">
+            Ver planes y activar <ArrowRight size={14} />
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (

@@ -118,15 +118,18 @@ export default async function BillingPage() {
                 })}
               </ul>
 
-              <button
-                disabled={isCurrent}
-                className={cn(
-                  "mt-auto w-full py-2.5 rounded-full text-sm font-medium transition",
-                  isCurrent ? "bg-bg-sage text-ink-muted cursor-not-allowed" : "btn btn-accent",
-                )}
-              >
-                {isCurrent ? "Plan actual" : "Cambiar"}
-              </button>
+              {isCurrent ? (
+                <div className="mt-auto w-full py-2.5 text-center text-sm font-medium text-ink-muted bg-bg-vellum rounded-full">
+                  Plan actual
+                </div>
+              ) : (
+                <Link
+                  href="/precios"
+                  className="mt-auto btn btn-accent w-full justify-center text-sm"
+                >
+                  Cambiar plan
+                </Link>
+              )}
             </div>
           );
         })}

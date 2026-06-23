@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, Users, Calendar, CreditCard, ToggleLeft, ToggleRight } from "lucide-react";
+import { ArrowLeft, Save, Users, Calendar, CreditCard, ToggleLeft, ToggleRight, Check } from "lucide-react";
 import { Card, CardTitle, CardEyebrow } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
 
@@ -84,7 +84,7 @@ export function TenantEditClient({
           className={cn("btn text-sm shrink-0", saved ? "btn-tonal" : "btn-primary")}
         >
           <Save size={14} />
-          {saving ? "Guardando…" : saved ? "Guardado ✓" : "Guardar cambios"}
+          {saving ? "Guardando…" : saved ? <><Check size={13} /> Guardado</> : "Guardar cambios"}
         </button>
       </header>
 

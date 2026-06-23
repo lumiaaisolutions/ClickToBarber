@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, CalendarDays, Loader2, X, Clock, User, Scissors } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarDays, Loader2, X, Clock, User, Scissors, Check } from "lucide-react";
 import type { AppointmentDto } from "@/lib/api";
 import { cn, fmtCents } from "@/lib/utils";
 
@@ -197,7 +197,7 @@ export function AgendaCalendar({ initialAppointments, initialWeekStart, barbers 
           >
             <ChevronRight size={15} />
           </button>
-          <div className="ml-2 font-display italic text-base sm:text-lg text-ink">
+          <div className="ml-2 font-display font-bold tracking-tight text-base sm:text-lg text-ink">
             {rangeLabel(mode, weekStart, selectedDate)}
           </div>
           {loading && <Loader2 size={14} className="animate-spin text-ink-muted ml-2" />}
@@ -486,7 +486,7 @@ function AppointmentDetail({
         <div className="flex items-start justify-between mb-5">
           <div>
             <div className="text-[10px] uppercase tracking-[0.28em] text-accent">{appt.status_label}</div>
-            <h2 className="font-display italic text-2xl mt-1">{appt.service.name}</h2>
+            <h2 className="font-display font-bold tracking-tight text-2xl mt-1">{appt.service.name}</h2>
           </div>
           <button onClick={onClose} className="h-8 w-8 inline-flex items-center justify-center rounded-[8px] border border-line-fine hover:border-primary/40 hover:text-primary">
             <X size={15} />
@@ -506,7 +506,7 @@ function AppointmentDetail({
           <Row icon={<CalendarDays size={14} className="text-accent" />} label="Precio">
             <span className="font-mono">{fmtCents(appt.price_cents)}</span>
             {appt.deposit_status === "captured" && (
-              <span className="ml-2 text-success text-xs">Depósito {fmtCents(appt.deposit_cents)} ✓</span>
+              <span className="ml-2 text-success text-xs inline-flex items-center gap-0.5">Depósito {fmtCents(appt.deposit_cents)} <Check size={10} strokeWidth={2.5} /></span>
             )}
             {appt.deposit_status === "forfeited" && (
               <span className="ml-2 text-danger text-xs">Depósito retenido</span>
